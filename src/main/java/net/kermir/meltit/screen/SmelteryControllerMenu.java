@@ -2,7 +2,9 @@ package net.kermir.meltit.screen;
 
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.BlockRegistry;
+import net.kermir.meltit.block.multiblock.ModifiedItemStackHandler;
 import net.kermir.meltit.block.multiblock.SmelteryControllerBlockEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -10,6 +12,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 import net.minecraft.world.inventory.Slot;
@@ -17,7 +21,7 @@ import net.minecraft.world.inventory.Slot;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SmelteryControllerMenu extends AbstractContainerMenu {
-    private final SmelteryControllerBlockEntity blockEntity;
+    public final SmelteryControllerBlockEntity blockEntity;
     private final Level level;
     private final Player player;
 
@@ -32,10 +36,15 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
         this.player = inv.player;
         this.level = player.level;
 
+        MeltIt.LOGGER.debug("{}",blockEntity.getBlockPos());
+        BlockPos ourPos = blockEntity.getBlockPos();
+
         addPlayerInventory(inv);
         addPlayerHotbar(inv);
 
         this.blockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(handler -> {
+
+            ModifiedItemStackHandler stackHandler = (ModifiedItemStackHandler) handler;
             for (int i = 0; i < handler.getSlots() ;i++) {
                 //this pain runs on both client and server and having a mismatch will cause headaches
                 //This can get desynced if handler size changes

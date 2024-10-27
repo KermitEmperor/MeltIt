@@ -26,6 +26,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.eventbus.EventBus;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
@@ -40,7 +41,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class SmelteryControllerBlockEntity extends BlockEntity implements MenuProvider, MultiblockMaster {
-    private final ItemStackHandler itemHandler = new ItemStackHandler(5) {
+    private final ModifiedItemStackHandler itemHandler = new ModifiedItemStackHandler(5, worldPosition) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
@@ -53,6 +54,7 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
         @Override
         public void setSize(int size) {
+            //pars source entity here?
             if (size>stacks.size()) {
                 List<ItemStack> combined = new ArrayList<>();
                 List<ItemStack> previous = stacks;
@@ -80,13 +82,14 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
         @Override
         public ItemStack getStackInSlot(int slot) {
-            //Definitely not trying to circumvent an error
             if (slot >= this.stacks.size()) {
+                kickViewer();
                 return ItemStack.EMPTY;
             }
             return super.getStackInSlot(slot);
         }
     };
+
 
     private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
 
@@ -174,5 +177,8 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
         CompoundTag nbt = super.getUpdateTag();
         saveAdditional(nbt);
         return nbt;
+    }
+
+    public void kickViewer() {
     }
 }
