@@ -5,6 +5,7 @@ import net.kermir.meltit.block.BlockEntityRegistry;
 import net.kermir.meltit.block.BlockRegistry;
 import net.kermir.meltit.item.CreativeTab;
 import net.kermir.meltit.item.ItemRegistry;
+import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.screen.MenuTypeRegistries;
 import net.kermir.meltit.screen.SmelteryControllerScreen;
 import net.minecraft.client.Minecraft;
@@ -49,6 +50,7 @@ public class MeltIt {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        PacketChannel.register();
         LOGGER.info("HELLO FROM MELT IT :D");
     }
 }

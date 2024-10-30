@@ -1,9 +1,9 @@
 package net.kermir.meltit.block.multiblock;
 
 import net.kermir.meltit.block.BlockEntityRegistry;
+import net.kermir.meltit.networking.PacketChannel;
+import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
 import net.kermir.meltit.screen.SmelteryControllerMenu;
-import net.kermir.meltit.screen.SmelteryControllerScreen;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -16,29 +16,21 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.eventbus.EventBus;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 public class SmelteryControllerBlockEntity extends BlockEntity implements MenuProvider, MultiblockMaster {
     private final ModifiedItemStackHandler itemHandler = new ModifiedItemStackHandler(5, worldPosition) {
@@ -54,7 +46,9 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
         @Override
         public void setSize(int size) {
-            //pars source entity here?
+            if (level != null && !level.isClientSide()) {
+                PacketChannel.sendToAllClients(new CloseSmelteryScreenPacket(worldPosition));
+            }
             if (size>stacks.size()) {
                 List<ItemStack> combined = new ArrayList<>();
                 List<ItemStack> previous = stacks;
@@ -82,8 +76,7 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
         @Override
         public ItemStack getStackInSlot(int slot) {
-            if (slot >= this.stacks.size()) {
-                kickViewer();
+            if (slot < 0|| slot >= this.stacks.size()) {
                 return ItemStack.EMPTY;
             }
             return super.getStackInSlot(slot);
@@ -177,8 +170,5 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
         CompoundTag nbt = super.getUpdateTag();
         saveAdditional(nbt);
         return nbt;
-    }
-
-    public void kickViewer() {
     }
 }

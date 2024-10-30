@@ -36,9 +36,6 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
         this.player = inv.player;
         this.level = player.level;
 
-        MeltIt.LOGGER.debug("{}",blockEntity.getBlockPos());
-        BlockPos ourPos = blockEntity.getBlockPos();
-
         addPlayerInventory(inv);
         addPlayerHotbar(inv);
 
@@ -49,7 +46,6 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
                 //this pain runs on both client and server and having a mismatch will cause headaches
                 //This can get desynced if handler size changes
                 this.addSlot(new SlotItemHandler(handler, i, -17, i*18+1));
-                MeltIt.LOGGER.debug("{} and {}", i, level.isClientSide());
             }
         });
     }
