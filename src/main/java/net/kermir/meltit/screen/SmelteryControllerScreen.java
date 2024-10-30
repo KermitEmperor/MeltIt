@@ -13,8 +13,11 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraftforge.client.gui.ScrollPanel;
+import net.minecraftforge.client.gui.widget.ForgeSlider;
 
 public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryControllerMenu> {
 
@@ -23,7 +26,25 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
 
     public SmelteryControllerScreen(SmelteryControllerMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
         super(pMenu, pPlayerInventory, pTitle);
+        this.size = this.getMenu().getCurrentSize();
+        this.isBig = size > 24;
+        this.scrollbarHeld = false;
+        this.scrollbarOffset = 0;
     }
+
+    public int size;
+    public boolean isBig;
+    public boolean scrollbarHeld;
+    public int scrollbarOffset;
+    private static final int scrollBarImageWidth = 14;
+    private static final int scrollBarImageHeight = 145;
+    private static final int scrollButtonImageWidth = 12;
+    private static final int scrollButtonImageHeight = 15;
+    private static final int smelterySlotImageWidth = 22;
+    private static final int smelterySlotImageHeight = 18;
+    private static final int blankSlotImageWidth = 22;
+    private static final int blankSlotImageHeight = 18;
+    public static final int scrollbarMax = scrollBarImageHeight-scrollButtonImageHeight-3;
 
     @Override
     protected void renderBg(PoseStack pPoseStack, float pPartialTick, int pMouseX, int pMouseY) {
@@ -33,32 +54,67 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
 
+        //main gui
         this.blit(pPoseStack, x,y+2,0,0,imageWidth,imageHeight);
+        //slider
 
-        boolean isBig = this.getMenu().getCurrentSize() > 24;
+        //slider background
 
-
-        /*
         if (isBig) {
-            this.addRenderableWidget();
-        }*/
-
-        int currentSlot = 0;
-        for (Slot slot_og : this.getMenu().slots) {
-            if (currentSlot < 24) {
-                if (slot_og instanceof SmelterySlot) {
-                    this.blit(pPoseStack, slot_og.x+x-5, slot_og.y+y-1, 0, 166, 22,18);
-                    currentSlot++;
-                }
+            this.blit(pPoseStack, x-18, y, 176, 76, scrollBarImageWidth, scrollBarImageHeight);
+            //slider button
+            if (!scrollbarHeld) {
+                this.blit(pPoseStack, x-17, y+1+scrollbarOffset, 152, 166, scrollButtonImageWidth, scrollButtonImageHeight);
+            } else {
+                this.blit(pPoseStack, x-17, y+1+scrollbarOffset, 164, 166, scrollButtonImageWidth, scrollButtonImageHeight);
             }
         }
 
 
-        /*
-        for (int i = 1; i <= this.menu.getCurrentSize(); i++) {
-            this.blit(pPoseStack, x-22,y+slot_y,0,166,22,18);
-            slot_y+=18;
-        }*/
+
+
+        //slots
+        int currentSlot = 0;
+        for (Slot slot_og : this.getMenu().slots) {
+            if (currentSlot < 24) {
+                if (slot_og instanceof SmelterySlot) {
+                    this.blit(pPoseStack, slot_og.x+x-5, slot_og.y+y-1, 0, 166, smelterySlotImageWidth,smelterySlotImageHeight);
+                    currentSlot++;
+                }
+            }
+        }
+    }
+
+
+
+    @Override
+    public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
+        this.scrollbarHeld = false;
+        int x = (width - imageWidth) / 2;
+        int y = (height - imageHeight) / 2;
+
+        if (isBig) {
+            if ((pMouseX >= x-18 && pMouseX <= x-18+scrollBarImageWidth) && (pMouseY >= y+scrollbarOffset && pMouseY <= y+scrollButtonImageHeight+scrollbarOffset)) this.scrollbarHeld = true;
+        }
+
+        return super.mouseClicked(pMouseX, pMouseY, pButton);
+    }
+
+    @Override
+    public boolean mouseReleased(double pMouseX, double pMouseY, int pButton) {
+        this.scrollbarHeld = false;
+        return super.mouseReleased(pMouseX, pMouseY, pButton);
+    }
+
+    @Override
+    public boolean mouseDragged(double pMouseX, double pMouseY, int pButton, double pDragX, double pDragY) {
+        if (isBig) {
+            int y = (height - imageHeight) / 2;
+            if (scrollbarHeld) {
+                this.scrollbarOffset = Mth.clamp(Mth.ceil((pMouseY-y)-((double) scrollButtonImageHeight /2)), 0, scrollbarMax);
+            }
+        }
+        return super.mouseDragged(pMouseX, pMouseY, pButton, pDragX, pDragY);
     }
 
     @Override

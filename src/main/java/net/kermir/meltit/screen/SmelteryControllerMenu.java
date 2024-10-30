@@ -5,21 +5,21 @@ import net.kermir.meltit.block.BlockRegistry;
 import net.kermir.meltit.block.multiblock.ModifiedItemStackHandler;
 import net.kermir.meltit.block.multiblock.SmelteryControllerBlockEntity;
 import net.kermir.meltit.screen.slot.SmelterySlot;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.SlotItemHandler;
 import net.minecraft.world.inventory.Slot;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SmelteryControllerMenu extends AbstractContainerMenu {
@@ -53,8 +53,9 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
                     int modul = i%3;
                     int posmodul = 2 - modul;
                     if (modul == 0) row++;
-                    if (i < 24)
+                    if (i < 24) {
                         this.addSlot(new SmelterySlot(handler, i, -17-(posmodul*22)+displaceXAmount, row*18+1));
+                    }
                 } else {
                     this.addSlot(new SmelterySlot(handler, i, -17, i*18+1));
                 }
@@ -107,11 +108,12 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
         }
 
         if (!(sourceSlot instanceof SmelterySlot)) {
-            if (!moveItemStackTo(sourceStack, firstBEslotIndex, firstBEslotIndex+(getCurrentSize()), false)) {
+            //if (!moveItemStackTo(sourceStack, firstBEslotIndex, firstBEslotIndex+(getCurrentSize()), false)) {
+            if (!moveItemStackToBlockEntity(sourceStack)) {
                 return ItemStack.EMPTY;
             }
         } else {
-            if (!moveItemStackTo(sourceStack, 0, firstBEslotIndex-1, false)) {
+            if (!moveItemStackToInventory(sourceStack, 0, firstBEslotIndex-1)) {
                 return ItemStack.EMPTY;
             }
         }
@@ -126,109 +128,84 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
         return copyOfSourceStack;
     }
 
-    //Credit to Mantle devs: https://github.com/SlimeKnights/Mantle/blob/1.18.2/src/main/java/slimeknights/mantle/inventory/BaseContainerMenu.java
-    protected boolean moveItemStackTo(ItemStack stack, int startIndex, int endIndex, boolean useEndIndex) {
-        boolean ret = this.mergeItemStackRefill(stack, startIndex, endIndex, useEndIndex);
-        if (!stack.isEmpty() && stack.getCount() > 0) {
-            ret |= this.mergeItemStackMove(stack, startIndex, endIndex, useEndIndex);
-        }
-        return ret;
-    }
+    protected boolean moveItemStackToBlockEntity(ItemStack stack) {
+        AtomicBoolean ret = new AtomicBoolean(false);
+        ItemStack singularStack = stack.copy();
+        singularStack.setCount(1);
 
-    protected boolean mergeItemStackRefill(ItemStack stack, int startIndex, int endIndex, boolean useEndIndex) {
-        if (stack.getCount() <= 0) {
-            return false;
-        }
-
-        boolean flag1 = false;
-        int k = startIndex;
-
-        if (useEndIndex) {
-            k = endIndex - 1;
-        }
-
-        Slot slot;
-        ItemStack itemstack1;
+        if (stack.isEmpty()) return false;
 
         if (stack.isStackable()) {
-            while (stack.getCount() > 0 && (!useEndIndex && k < endIndex || useEndIndex && k >= startIndex)) {
-                slot = this.slots.get(k);
-                itemstack1 = slot.getItem();
-
-                if (!itemstack1.isEmpty() && itemstack1.getItem() == stack.getItem() && ItemStack.tagMatches(stack, itemstack1) && this.canTakeItemForPickAll(stack, slot)) {
-                    int l = itemstack1.getCount() + stack.getCount();
-                    int limit = Math.min(stack.getMaxStackSize(), slot.getMaxStackSize(stack));
-
-                    if (l <= limit) {
-                        stack.setCount(0);
-                        itemstack1.setCount(l);
-                        slot.setChanged();
-                        flag1 = true;
-                    } else if (itemstack1.getCount() < limit) {
-                        stack.shrink(limit - itemstack1.getCount());
-                        itemstack1.setCount(limit);
-                        slot.setChanged();
-                        flag1 = true;
+            this.blockEntity.useItemHandler(handler -> {
+                for (int slot_index = 0; slot_index < handler.getSlots(); slot_index++ ) {
+                    if (stack.isEmpty()) break;
+                    if (handler.getStackInSlot(slot_index).isEmpty()) {
+                        blockEntity.safeInsert(slot_index, stack, 1);
+                        ret.set(true);
                     }
                 }
+            });
+        }
 
-                if (useEndIndex) {
-                    --k;
-                } else {
-                    ++k;
+        return ret.get();
+    }
+    protected boolean moveItemStackToInventory(ItemStack stack,int startIndex, int endIndex) {
+        AtomicBoolean ret = new AtomicBoolean(false);
+
+        MeltIt.LOGGER.debug("I ran1");
+        if (stack.isEmpty()) return false;
+
+        MeltIt.LOGGER.debug("I ran2");
+        for (int slot_index = startIndex; slot_index <= endIndex; slot_index++) {
+            Slot slot = slots.get(slot_index);
+            ItemStack slotItem = slot.getItem();
+            if (!slotItem.isEmpty() && slotItem.getItem() == stack.getItem() && ItemStack.tagMatches(stack, slotItem) && this.canTakeItemForPickAll(stack, slot)) {
+                int l = slotItem.getCount() + stack.getCount();
+                int limit = Math.min(stack.getMaxStackSize(), slot.getMaxStackSize(stack));
+
+                if (l <= limit) {
+                    stack.setCount(0);
+                    slotItem.setCount(l);
+                    slot.setChanged();
+                    ret.set(true);
+                } else if (slotItem.getCount() < limit) {
+                    stack.shrink(limit - slotItem.getCount());
+                    slotItem.setCount(limit);
+                    slot.setChanged();
+                    ret.set(true);
                 }
+            } else if (slotItem.isEmpty()) {
+                slot.safeInsert(stack);
+                ret.set(true);
             }
         }
 
-        return flag1;
+        return ret.get();
     }
 
-    protected boolean mergeItemStackMove(ItemStack stack, int startIndex, int endIndex, boolean useEndIndex) {
-        if (stack.getCount() <= 0) {
-            return false;
-        }
+    @Override
+    public void clicked(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
 
-        boolean flag1 = false;
-        int k;
+        ItemStack mouseItemStack = this.getCarried();
+        if (pClickType == ClickType.PICKUP_ALL) {
+            this.blockEntity.useItemHandler(handler -> {
 
-        if (useEndIndex) {
-            k = endIndex - 1;
-        } else {
-            k = startIndex;
-        }
+                for (int slotIndex = 0; slotIndex < handler.getSlots(); slotIndex++) {
+                    if (mouseItemStack.getMaxStackSize() == mouseItemStack.getCount()) break;
 
-        while (!useEndIndex && k < endIndex || useEndIndex && k >= startIndex) {
-            Slot slot = this.slots.get(k);
-            ItemStack itemstack1 = slot.getItem();
-
-            // Forge: Make sure to respect isItemValid in the slot.
-            if (itemstack1.isEmpty() && slot.mayPlace(stack) && this.canTakeItemForPickAll(stack, slot)) {
-                int limit = slot.getMaxStackSize(stack);
-                ItemStack stack2 = stack.copy();
-
-                if (stack2.getCount() > limit) {
-                    stack2.setCount(limit);
-                    stack.shrink(limit);
-                } else {
-                    stack.setCount(0);
+                    if (handler.getStackInSlot(slotIndex).is(mouseItemStack.getItem())) {
+                        mouseItemStack.grow(1);
+                        this.blockEntity.safeTake(slotIndex, 1, 1, pPlayer);
+                    }
                 }
-
-                slot.set(stack2);
-                slot.setChanged();
-                flag1 = true;
-
-                if (stack.isEmpty()) {
-                    break;
-                }
-            }
-
-            if (useEndIndex) {
-                --k;
-            } else {
-                ++k;
-            }
+            });
         }
 
-        return flag1;
+        super.clicked(pSlotId, pButton, pClickType, pPlayer);
+    }
+
+    @Override
+    protected boolean moveItemStackTo(ItemStack pStack, int pStartIndex, int pEndIndex, boolean pReverseDirection) {
+        return false;
     }
 }

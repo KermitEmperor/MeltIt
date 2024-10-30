@@ -33,12 +33,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class SmelteryControllerBlockEntity extends BlockEntity implements MenuProvider, MultiblockMaster {
-    private final ModifiedItemStackHandler itemHandler = new ModifiedItemStackHandler(5, worldPosition) {
+    public final ModifiedItemStackHandler itemHandler = new ModifiedItemStackHandler(5, worldPosition) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
@@ -110,6 +111,54 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
             pLevel.removeBlock(pPos.below(), false);
         }
     }
+
+    public ItemStack safeInsert(int slotIndex, ItemStack pStack, int pIncrement) {;
+        if (!pStack.isEmpty()) {
+            ItemStack itemstack = this.itemHandler.getStackInSlot(slotIndex);
+            int i = Math.min(Math.min(pIncrement, pStack.getCount()), this.itemHandler.getSlotLimit(slotIndex) - itemstack.getCount());
+            if (itemstack.isEmpty()) {
+                this.itemHandler.insertItem(slotIndex, pStack.split(i), false);
+            } else if (ItemStack.isSameItemSameTags(itemstack, pStack)) {
+                pStack.shrink(i);
+                itemstack.grow(i);
+                this.itemHandler.insertItem(slotIndex, itemstack, false);
+            }
+
+            setChanged();
+            return pStack;
+        } else {
+            setChanged();
+            return pStack;
+        }
+    }
+
+    public Optional<ItemStack> tryRemove(int slotIndex,int pCount, int pDecrement, Player pPlayer) {
+        if (pDecrement < this.itemHandler.getStackInSlot(slotIndex).getCount()) {
+            return Optional.empty();
+        } else {
+            pCount = Math.min(pCount, pDecrement);
+            //ItemStack itemstack = this.remove(pCount);
+            ItemStack itemstack = this.itemHandler.getStackInSlot(slotIndex).split(pCount);
+            if (itemstack.isEmpty()) {
+                return Optional.empty();
+            } else {
+                if (this.itemHandler.getStackInSlot(slotIndex).isEmpty()) {
+                    this.itemHandler.setStackInSlot(slotIndex, ItemStack.EMPTY);
+                }
+
+                return Optional.of(itemstack);
+            }
+        }
+    }
+
+    public ItemStack safeTake(int slotIndex ,int pCount, int pDecrement, Player pPlayer) {
+        Optional<ItemStack> optional = this.tryRemove(slotIndex,pCount, pDecrement, pPlayer);
+        optional.ifPresent((p_150655_) -> {
+            setChanged();
+        });
+        return optional.orElse(ItemStack.EMPTY);
+    }
+
 
     public void useItemHandler(Consumer<IItemHandler> method) {
         this.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(method::accept);
