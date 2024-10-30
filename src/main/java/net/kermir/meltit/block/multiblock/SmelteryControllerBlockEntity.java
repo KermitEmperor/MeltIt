@@ -1,5 +1,6 @@
 package net.kermir.meltit.block.multiblock;
 
+import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.BlockEntityRegistry;
 import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
@@ -25,12 +26,16 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class SmelteryControllerBlockEntity extends BlockEntity implements MenuProvider, MultiblockMaster {
     private final ModifiedItemStackHandler itemHandler = new ModifiedItemStackHandler(5, worldPosition) {
@@ -101,9 +106,13 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
             pLevel.removeBlock(pPos.below(), false);
         }
         if (blockStateBelow.equals(Blocks.GOLD_BLOCK.defaultBlockState())) {
-            pBlockEntity.itemHandler.setSize(pBlockEntity.itemHandler.getSlots()+5);
+            pBlockEntity.itemHandler.setSize(30);
             pLevel.removeBlock(pPos.below(), false);
         }
+    }
+
+    public void useItemHandler(Consumer<IItemHandler> method) {
+        this.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(method::accept);
     }
 
     @Override
