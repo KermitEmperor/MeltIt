@@ -2,15 +2,15 @@ package net.kermir.meltit.networking;
 
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
+import net.kermir.meltit.networking.packet.UpdateServerIndicies;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+@SuppressWarnings({"unused"})
 public class PacketChannel {
     private static SimpleChannel INSTANCE;
 
@@ -34,8 +34,17 @@ public class PacketChannel {
                 .decoder(CloseSmelteryScreenPacket::new)
                 .consumer(CloseSmelteryScreenPacket::handle)
                 .add();
+
+        net.messageBuilder(UpdateServerIndicies.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .encoder(UpdateServerIndicies::encode)
+                .decoder(UpdateServerIndicies::new)
+                .consumer(UpdateServerIndicies::handle)
+                .add();
     }
 
+    public static <MSG> void sendToServer(MSG message) {
+        INSTANCE.sendToServer(message);
+    }
 
     public static <MSG> void sendToAllClients(MSG message) {
         INSTANCE.send(PacketDistributor.ALL.noArg(), message);

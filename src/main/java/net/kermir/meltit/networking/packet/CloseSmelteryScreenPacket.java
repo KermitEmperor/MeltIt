@@ -9,10 +9,12 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 
+//MMMM packets
+@SuppressWarnings("unused")
 public class CloseSmelteryScreenPacket {
     private BlockPos blockPos;
 
-    public CloseSmelteryScreenPacket() {};
+    public CloseSmelteryScreenPacket() {}
 
     public CloseSmelteryScreenPacket(BlockPos blockPos) {
         this.blockPos = blockPos;

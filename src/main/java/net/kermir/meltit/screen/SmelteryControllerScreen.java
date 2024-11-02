@@ -3,22 +3,19 @@ package net.kermir.meltit.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.kermir.meltit.MeltIt;
+import net.kermir.meltit.networking.PacketChannel;
+import net.kermir.meltit.networking.packet.UpdateServerIndicies;
 import net.kermir.meltit.screen.slot.SmelterySlot;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.components.SliderButton;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
-import net.minecraftforge.client.gui.ScrollPanel;
-import net.minecraftforge.client.gui.widget.ForgeSlider;
+import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("unused")
 public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryControllerMenu> {
 
     private static final ResourceLocation TEXTURE =
@@ -27,15 +24,21 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
     public SmelteryControllerScreen(SmelteryControllerMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
         super(pMenu, pPlayerInventory, pTitle);
         this.size = this.getMenu().getCurrentSize();
-        this.isBig = size > 24;
+        this.isBig = this.size > 24;
         this.scrollbarHeld = false;
         this.scrollbarOffset = 0;
+        this.previousIndexOffset = 0;
+        this.remainderRows = (Mth.ceil((double) this.size-24)/3);
+        this.indexOffset = 0;
     }
 
     public int size;
     public boolean isBig;
     public boolean scrollbarHeld;
     public int scrollbarOffset;
+    public int remainderRows;
+    public int previousIndexOffset;
+    public int indexOffset;
     private static final int scrollBarImageWidth = 14;
     private static final int scrollBarImageHeight = 145;
     private static final int scrollButtonImageWidth = 12;
@@ -47,7 +50,7 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
     public static final int scrollbarMax = scrollBarImageHeight-scrollButtonImageHeight-3;
 
     @Override
-    protected void renderBg(PoseStack pPoseStack, float pPartialTick, int pMouseX, int pMouseY) {
+    protected void renderBg(@NotNull PoseStack pPoseStack, float pPartialTick, int pMouseX, int pMouseY) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1,1,1,1);
         RenderSystem.setShaderTexture(0, TEXTURE);
@@ -110,15 +113,26 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
     public boolean mouseDragged(double pMouseX, double pMouseY, int pButton, double pDragX, double pDragY) {
         if (isBig) {
             int y = (height - imageHeight) / 2;
+            if (indexOffset != previousIndexOffset) {
+                //WARNING if something breaks while using the scrollbar, it probably broke here
+                this.menu.reAddingSlots(this.menu.getPlayerInventory(),this.indexOffset*3);
+                // HEeeeyyy did you know that Menu exists on server side too?
+                // Yeah I too found it out after...
+                // 3 GODDAMN HOURS OF DEBUG HELL
+                PacketChannel.sendToServer(new UpdateServerIndicies(this.indexOffset*3));
+            }
+
+            this.previousIndexOffset = this.indexOffset;
             if (scrollbarHeld) {
                 this.scrollbarOffset = Mth.clamp(Mth.ceil((pMouseY-y)-((double) scrollButtonImageHeight /2)), 0, scrollbarMax);
+                this.indexOffset = Math.round((float) scrollbarOffset/((float) scrollbarMax /remainderRows));
             }
         }
         return super.mouseDragged(pMouseX, pMouseY, pButton, pDragX, pDragY);
     }
 
     @Override
-    public void render(PoseStack pPoseStack, int pMouseX, int pMouseY, float pPartialTick) {
+    public void render(@NotNull PoseStack pPoseStack, int pMouseX, int pMouseY, float pPartialTick) {
         renderBackground(pPoseStack);
         super.render(pPoseStack, pMouseX, pMouseY, pPartialTick);
         renderTooltip(pPoseStack, pMouseX, pMouseY);

@@ -1,12 +1,10 @@
 package net.kermir.meltit.screen;
 
-import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.BlockRegistry;
 import net.kermir.meltit.block.multiblock.ModifiedItemStackHandler;
 import net.kermir.meltit.block.multiblock.SmelteryControllerBlockEntity;
 import net.kermir.meltit.screen.slot.SmelterySlot;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -19,13 +17,14 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraft.world.inventory.Slot;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SmelteryControllerMenu extends AbstractContainerMenu {
     public final SmelteryControllerBlockEntity blockEntity;
     private final Level level;
-    private final Player player;
+    private final Inventory playerInventory;
 
     public SmelteryControllerMenu(int pContainerId, Inventory inv, FriendlyByteBuf extraData) {
         this(pContainerId, inv, inv.player.level.getBlockEntity(extraData.readBlockPos()));
@@ -35,12 +34,25 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
         super(MenuTypeRegistries.SMELTERY_CONTROLLER_MENU.get(), pContainerId);
         checkContainerSize(inv, 4);
         blockEntity = (SmelteryControllerBlockEntity) entity;
-        this.player = inv.player;
+        Player player = inv.player;
         this.level = player.level;
+        this.playerInventory = inv;
 
-        addPlayerInventory(inv);
-        addPlayerHotbar(inv);
+        reAddingSlots(this.playerInventory, 0);
+    }
 
+    public void reAddingSlots(Inventory pPlayerInv, int indexOffset) {
+        //if it works, it works
+        //touching is not recommended
+        if (indexOffset < 0) {
+            indexOffset = 0; //considering that I am single-handedly developing the mod, it is better if this stays here
+        }
+        this.slots.clear();
+
+        addPlayerInventory(pPlayerInv);
+        addPlayerHotbar(pPlayerInv);
+
+        int finalIndexOffset = indexOffset;
         this.blockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(handler -> {
             ModifiedItemStackHandler stackHandler = (ModifiedItemStackHandler) handler;
             boolean isBig = handler.getSlots() > 24;
@@ -53,28 +65,17 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
                     int modul = i%3;
                     int posmodul = 2 - modul;
                     if (modul == 0) row++;
-                    if (i < 24) {
-                        this.addSlot(new SmelterySlot(handler, i, -17-(posmodul*22)+displaceXAmount, row*18+1));
+                    if ((i < 24) && ((i+finalIndexOffset) < stackHandler.getSlots())) {
+                        this.addSlot(new SmelterySlot(handler, i + finalIndexOffset, -17-(posmodul*22)+displaceXAmount, row*18+1));
                     }
                 } else {
                     this.addSlot(new SmelterySlot(handler, i, -17, i*18+1));
                 }
             }
         });
-    }
 
-    public int getCurrentSize() {
-        AtomicInteger slotCount = new AtomicInteger();
-        this.blockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(iItemHandler -> {
-            slotCount.set(iItemHandler.getSlots());
-        });
-        return slotCount.get();
-    }
-
-    @Override
-    public boolean stillValid(Player pPlayer) {
-        return stillValid(ContainerLevelAccess.create(level, blockEntity.getBlockPos()),
-                pPlayer, BlockRegistry.SMELTERY_CONTROLLER.get());
+        this.broadcastChanges();
+        this.broadcastFullState();
     }
 
     private void addPlayerInventory(Inventory playerInventory) {
@@ -91,8 +92,42 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
         }
     }
 
+    public int getCurrentSize() {
+        AtomicInteger slotCount = new AtomicInteger();
+        this.blockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(iItemHandler ->
+                slotCount.set(iItemHandler.getSlots())
+        );
+        return slotCount.get();
+    }
+
     @Override
-    public ItemStack quickMoveStack(Player pPlayer, int pIndex) {
+    public @NotNull Slot getSlot(int pSlotId) {
+        //MeltIt.LOGGER.debug("getSlotRequest {}", pSlotId);
+        return super.getSlot(pSlotId);
+    }
+
+    @Override
+    public void initializeContents(int pStateId, List<ItemStack> pItems, @NotNull ItemStack pCarried) {
+        //For some GODFORSAKEN REASON its getting an extra "1 air" itemstack at the end :33333
+        List<ItemStack> newList = pItems.subList(0, slots.size()-1);
+        super.initializeContents(pStateId, newList, pCarried);
+    }
+
+    public Inventory getPlayerInventory() {
+        return this.playerInventory;
+    }
+
+    @Override
+    public boolean stillValid(@NotNull Player pPlayer) {
+        return stillValid(ContainerLevelAccess.create(level, blockEntity.getBlockPos()),
+                pPlayer, BlockRegistry.SMELTERY_CONTROLLER.get());
+    }
+
+    @Override
+    public @NotNull ItemStack quickMoveStack(@NotNull Player pPlayer, int pIndex) {
+        if (pIndex < 0 || pIndex >= slots.size()) {
+            return ItemStack.EMPTY; // Prevent accessing out-of-bounds index
+        }
         Slot sourceSlot = slots.get(pIndex);
         if (!sourceSlot.hasItem()) return ItemStack.EMPTY;
         ItemStack sourceStack = sourceSlot.getItem();
@@ -108,7 +143,6 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
         }
 
         if (!(sourceSlot instanceof SmelterySlot)) {
-            //if (!moveItemStackTo(sourceStack, firstBEslotIndex, firstBEslotIndex+(getCurrentSize()), false)) {
             if (!moveItemStackToBlockEntity(sourceStack)) {
                 return ItemStack.EMPTY;
             }
@@ -149,13 +183,12 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
 
         return ret.get();
     }
+    @SuppressWarnings("SameParameterValue")
     protected boolean moveItemStackToInventory(ItemStack stack,int startIndex, int endIndex) {
         AtomicBoolean ret = new AtomicBoolean(false);
 
-        MeltIt.LOGGER.debug("I ran1");
         if (stack.isEmpty()) return false;
 
-        MeltIt.LOGGER.debug("I ran2");
         for (int slot_index = startIndex; slot_index <= endIndex; slot_index++) {
             Slot slot = slots.get(slot_index);
             ItemStack slotItem = slot.getItem();
@@ -184,28 +217,37 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public void clicked(int pSlotId, int pButton, ClickType pClickType, Player pPlayer) {
-
-        ItemStack mouseItemStack = this.getCarried();
+    public void clicked(int pSlotId, int pButton, @NotNull ClickType pClickType, @NotNull Player pPlayer) {
         if (pClickType == ClickType.PICKUP_ALL) {
-            this.blockEntity.useItemHandler(handler -> {
+            ItemStack mouseItemStack = this.getCarried();
+            Slot slot = this.slots.get(pSlotId);
+            if (!mouseItemStack.isEmpty() && (!slot.hasItem() || !slot.mayPickup(pPlayer) )) {
+                this.blockEntity.useItemHandler(handler -> {
 
-                for (int slotIndex = 0; slotIndex < handler.getSlots(); slotIndex++) {
-                    if (mouseItemStack.getMaxStackSize() == mouseItemStack.getCount()) break;
+                    for (int slotIndex = 0; slotIndex < handler.getSlots(); slotIndex++) {
 
-                    if (handler.getStackInSlot(slotIndex).is(mouseItemStack.getItem())) {
-                        mouseItemStack.grow(1);
-                        this.blockEntity.safeTake(slotIndex, 1, 1, pPlayer);
+                        if (handler.getStackInSlot(slotIndex).is(mouseItemStack.getItem())) {
+                            if (mouseItemStack.getMaxStackSize() == mouseItemStack.getCount()) break;
+
+                            mouseItemStack.grow(1);
+                            this.blockEntity.safeTake(slotIndex, 1, 1, pPlayer);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         super.clicked(pSlotId, pButton, pClickType, pPlayer);
     }
 
     @Override
-    protected boolean moveItemStackTo(ItemStack pStack, int pStartIndex, int pEndIndex, boolean pReverseDirection) {
+    protected boolean moveItemStackTo(@NotNull ItemStack pStack, int pStartIndex, int pEndIndex, boolean pReverseDirection) {
         return false;
+    }
+
+    @Override
+    public void removed(@NotNull Player pPlayer) {
+        super.removed(pPlayer);
+        this.slots.clear();
     }
 }
