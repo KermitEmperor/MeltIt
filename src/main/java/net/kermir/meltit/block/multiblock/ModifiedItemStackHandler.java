@@ -11,5 +11,4 @@ public class ModifiedItemStackHandler extends ItemStackHandler {
     }
 
     public BlockPos pos;
-
 }

@@ -1,7 +1,7 @@
 package net.kermir.meltit.block;
 
 import net.kermir.meltit.MeltIt;
-import net.kermir.meltit.block.multiblock.SmelteryControllerBlockEntity;
+import net.kermir.meltit.block.multiblock.controller.SmelteryControllerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;

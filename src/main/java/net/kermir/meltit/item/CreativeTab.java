@@ -1,5 +1,6 @@
 package net.kermir.meltit.item;
 
+import net.kermir.meltit.block.BlockRegistry;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -13,7 +14,7 @@ public class CreativeTab extends CreativeModeTab {
 
     @Override
     public @NotNull ItemStack makeIcon() {
-        return new ItemStack(Blocks.OBSIDIAN.asItem());
+        return new ItemStack(BlockRegistry.SMELTERY_CONTROLLER.get().asItem());
     }
 
     @Override

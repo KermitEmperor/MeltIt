@@ -1,7 +1,10 @@
-package net.kermir.meltit.block.multiblock;
+package net.kermir.meltit.block.multiblock.controller;
 
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.BlockEntityRegistry;
+import net.kermir.meltit.block.multiblock.ModifiedItemStackHandler;
+import net.kermir.meltit.block.multiblock.MultiblockMaster;
+import net.kermir.meltit.block.multiblock.MultiblockServant;
 import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
 import net.kermir.meltit.screen.SmelteryControllerMenu;
@@ -20,13 +23,17 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +41,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class SmelteryControllerBlockEntity extends BlockEntity implements MenuProvider, MultiblockMaster {
     public final ModifiedItemStackHandler itemHandler = new ModifiedItemStackHandler(5, worldPosition) {
@@ -89,8 +94,9 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
         }
     };
 
-
     private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
+    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     public SmelteryControllerBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(BlockEntityRegistry.SMELTERY_CONTROLLER_BLOCK_ENTITY.get(), pPos, pBlockState);
@@ -111,6 +117,30 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
             pLevel.removeBlock(pPos.below(), false);
         }
     }
+
+
+    //Structure algorithm
+
+    @Override
+    public boolean structureCheck(Level pLevel, BlockPos pPos, BlockState pState) {
+        if (this.level == null) return false;
+        BlockPos currentlyCheckedPos = pPos.below();
+        Direction facing = this.getBlockState().getValue(FACING);
+        //straight line to the base of the structure
+        while (pLevel.getBlockState(currentlyCheckedPos).getBlock() instanceof MultiblockServant servantBlock) {
+            if (!servantBlock.optionalSetMaster(this)) break;
+            MeltIt.LOGGER.debug("{}", currentlyCheckedPos);
+            currentlyCheckedPos = currentlyCheckedPos.below();
+        }
+        //first block of the base adjacent to the master
+        currentlyCheckedPos = currentlyCheckedPos.relative(facing.getOpposite(), 1);
+        //TODO this
+
+
+        return false;
+    }
+
+    //etc
 
     public ItemStack safeInsert(int slotIndex, ItemStack pStack, int pIncrement) {;
         if (!pStack.isEmpty()) {
@@ -159,10 +189,11 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
         return optional.orElse(ItemStack.EMPTY);
     }
 
-
     public void useItemHandler(Consumer<IItemHandler> method) {
         this.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(method::accept);
     }
+
+    //Base needs
 
     @Override
     public @NotNull Component getDisplayName() {
@@ -220,7 +251,8 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     }
 
     public void dropExcess(NonNullList<ItemStack> items) {
-        Containers.dropContents(this.level, this.worldPosition.above(), items);
+        if (this.level == null) return;
+        Containers.dropContents(this.level, this.worldPosition.relative(this.getBlockState().getValue(FACING), 1), items);
     }
 
     @Override
