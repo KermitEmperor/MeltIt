@@ -2,7 +2,7 @@ package net.kermir.meltit.screen;
 
 import net.kermir.meltit.block.BlockRegistry;
 import net.kermir.meltit.block.multiblock.ModifiedItemStackHandler;
-import net.kermir.meltit.block.multiblock.controller.SmelteryControllerBlockEntity;
+import net.kermir.meltit.block.multiblock.controller.entity.SmelteryControllerBlockEntity;
 import net.kermir.meltit.screen.slot.SmelterySlot;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

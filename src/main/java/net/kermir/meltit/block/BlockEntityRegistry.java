@@ -1,7 +1,8 @@
 package net.kermir.meltit.block;
 
 import net.kermir.meltit.MeltIt;
-import net.kermir.meltit.block.multiblock.controller.SmelteryControllerBlockEntity;
+import net.kermir.meltit.block.multiblock.controller.entity.SmelteryControllerBlockEntity;
+import net.kermir.meltit.block.multiblock.module.entity.SmelteryModuleBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -17,6 +18,22 @@ public class BlockEntityRegistry {
             BLOCK_ENTITIES.register("smeltery_controller_block_entity", () ->
                     BlockEntityType.Builder.of(SmelteryControllerBlockEntity::new,
                             BlockRegistry.SMELTERY_CONTROLLER.get()).build(null));
+
+    /*
+
+    https://github.com/SlimeKnights/Mantle/blob/1.18.2/src/main/java/slimeknights/mantle/registration/deferred/BlockEntityTypeDeferredRegister.java
+    bruh
+
+    public static final RegistryObject<BlockEntityType<SmelteryModuleBlockEntity>> SMELTERY_MODULE = BLOCK_ENTITIES.register("smeltery_module",SmelteryModuleBlockEntity::new, set -> {
+        set.addAll()
+    });*/
+
+    public static final RegistryObject<BlockEntityType<SmelteryModuleBlockEntity>> SMELTERY_MODULE = BLOCK_ENTITIES.register("smeltery_module", ()->
+            BlockEntityType.Builder.of(SmelteryModuleBlockEntity::new,
+                    BlockRegistry.WALL_BLOCK.get(),
+                    BlockRegistry.WALL_GLASS_BLOCK.get()
+            ).build(null));
+
 
 
     public static void register(IEventBus eventBus) {
