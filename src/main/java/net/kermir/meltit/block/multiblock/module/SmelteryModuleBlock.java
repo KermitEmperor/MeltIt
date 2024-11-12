@@ -8,7 +8,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -18,14 +17,12 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
-
-public class SmelteryWall extends Block implements EntityBlock {
+public class SmelteryModuleBlock extends Block implements EntityBlock {
     public static final BooleanProperty IN_MULTIBLOCK = BooleanProperty.create("in_multiblock");
 
     protected final boolean requiresBlockEntity;
 
-    public SmelteryWall(Properties pProperties, boolean requiresBlockEntity) {
+    public SmelteryModuleBlock(Properties pProperties, boolean requiresBlockEntity) {
         super(pProperties);
         this.requiresBlockEntity = requiresBlockEntity;
         this.registerDefaultState(this.defaultBlockState().setValue(IN_MULTIBLOCK, false));

@@ -1,5 +1,6 @@
 package net.kermir.meltit.block.multiblock.module.entity;
 
+import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.multiblock.IMaster;
 import net.kermir.meltit.block.multiblock.IServant;
 import net.kermir.meltit.util.BlockEntityHelper;
@@ -90,10 +91,12 @@ public class ServantEntity extends BlockEntity implements IServant {
     @Override
     public void setPossibleMaster(IMaster master) {
         BlockPos newMaster = master.getMasterPos();
+        MeltIt.LOGGER.info("master setPossible called");
         if (newMaster.equals(this.masterPos)) {
             masterBlock = master.getMasterBlock().getBlock();
             this.setChangedFast();
         } else if (!validateMaster()) {
+            MeltIt.LOGGER.info("new master set");
             setMaster(newMaster, master.getMasterBlock().getBlock());
         }
 

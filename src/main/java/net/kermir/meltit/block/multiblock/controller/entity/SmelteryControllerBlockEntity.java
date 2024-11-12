@@ -5,6 +5,7 @@ import net.kermir.meltit.block.BlockEntityRegistry;
 import net.kermir.meltit.block.multiblock.IMaster;
 import net.kermir.meltit.block.multiblock.IServant;
 import net.kermir.meltit.block.multiblock.ModifiedItemStackHandler;
+import net.kermir.meltit.block.multiblock.SmelteryMultiblock;
 import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
 import net.kermir.meltit.screen.SmelteryControllerMenu;
@@ -97,11 +98,11 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
+    private SmelteryMultiblock multiblock;
+
     public SmelteryControllerBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(BlockEntityRegistry.SMELTERY_CONTROLLER_BLOCK_ENTITY.get(), pPos, pBlockState);
-        if (level != null) {
-            this.structureCheck(pPos, pBlockState);
-        }
+        this.multiblock = new SmelteryMultiblock(this, pPos, pBlockState);
     }
 
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, SmelteryControllerBlockEntity pBlockEntity) {
@@ -121,38 +122,6 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     }
 
 
-    //Structure algorithm
-
-
-    private int limitWidth = 7;
-    private int limitDepth = 7;
-    private int limitHeight = 9;
-    public boolean structureCheck(BlockPos pPos, BlockState pState) {
-        if (this.level == null) return false;
-        BlockPos currentlyCheckedPos = pPos.below();
-        Direction facing = this.getBlockState().getValue(FACING);
-        //straight line to the base of the structure
-        while (this.level.getBlockState(currentlyCheckedPos).getBlock() instanceof IServant servantBlock) {
-            //if (servantBlock.optionalSetMaster(this)) break;
-            currentlyCheckedPos = currentlyCheckedPos.below();
-        }
-        //first block of the base adjacent to the master
-        currentlyCheckedPos = currentlyCheckedPos.relative(facing.getOpposite(), 1);
-        //go to left first and get the left part of the ring (if there's any)
-        //we don't have a base if this returns false
-        //Bro you are setting the value to the block class not the instance you dum
-        MeltIt.LOGGER.debug("{}", currentlyCheckedPos);
-        while (this.level.getBlockState(currentlyCheckedPos).getBlock() instanceof IServant servantBlock) {
-            //if (servantBlock.optionalSetMaster(this)) return false;
-            MeltIt.LOGGER.debug("{}", currentlyCheckedPos);
-            //Clockwise is to the left from our pov
-            currentlyCheckedPos = currentlyCheckedPos.relative(facing.getClockWise(), 1);
-        }
-
-        this.level.removeBlock(currentlyCheckedPos, false);
-
-        return false;
-    }
 
     //etc
 
@@ -279,6 +248,8 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     @Override
     public void notifyChange(BlockPos pos, BlockState state) {
         if (level == null) return;
+
+        multiblock.structureCheck(level);
 
         MeltIt.LOGGER.warn("oh no");
     }
