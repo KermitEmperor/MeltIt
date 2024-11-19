@@ -8,17 +8,16 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unused"})
-public class UpdateServerIndicies {
+public class UpdateServerMenuIndiciesPacket {
     private int offset;
 
+    public UpdateServerMenuIndiciesPacket() {}
 
-    public UpdateServerIndicies() {}
-
-    public UpdateServerIndicies(int offset) {
+    public UpdateServerMenuIndiciesPacket(int offset) {
         this.offset = offset;
     }
 
-    public UpdateServerIndicies(FriendlyByteBuf buf) {
+    public UpdateServerMenuIndiciesPacket(FriendlyByteBuf buf) {
         this.offset = buf.readInt();
     }
 

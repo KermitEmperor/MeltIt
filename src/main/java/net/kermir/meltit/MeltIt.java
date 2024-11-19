@@ -1,15 +1,23 @@
 package net.kermir.meltit;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.logging.LogUtils;
 import net.kermir.meltit.block.BlockEntityRegistry;
 import net.kermir.meltit.block.BlockRegistry;
 import net.kermir.meltit.item.CreativeTab;
 import net.kermir.meltit.item.ItemRegistry;
 import net.kermir.meltit.networking.PacketChannel;
+import net.kermir.meltit.render.RenderBox;
 import net.kermir.meltit.screen.MenuTypeRegistries;
 import net.kermir.meltit.screen.SmelteryControllerScreen;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -42,7 +50,9 @@ public class MeltIt {
 
 
         // Register ourselves for server and other game events we are interested in
-        MinecraftForge.EVENT_BUS.register(this);
+        IEventBus ForgeEventBus = MinecraftForge.EVENT_BUS;
+        ForgeEventBus.register(this);
+        ForgeEventBus.register(new RenderBox());
     }
 
     private void clientSetup(final FMLClientSetupEvent event) {

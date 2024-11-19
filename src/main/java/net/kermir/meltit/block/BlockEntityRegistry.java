@@ -19,14 +19,6 @@ public class BlockEntityRegistry {
                     BlockEntityType.Builder.of(SmelteryControllerBlockEntity::new,
                             BlockRegistry.SMELTERY_CONTROLLER.get()).build(null));
 
-    /*
-
-    https://github.com/SlimeKnights/Mantle/blob/1.18.2/src/main/java/slimeknights/mantle/registration/deferred/BlockEntityTypeDeferredRegister.java
-    bruh
-
-    public static final RegistryObject<BlockEntityType<SmelteryModuleBlockEntity>> SMELTERY_MODULE = BLOCK_ENTITIES.register("smeltery_module",SmelteryModuleBlockEntity::new, set -> {
-        set.addAll()
-    });*/
 
     public static final RegistryObject<BlockEntityType<SmelteryModuleBlockEntity>> SMELTERY_MODULE = BLOCK_ENTITIES.register("smeltery_module", ()->
             BlockEntityType.Builder.of(SmelteryModuleBlockEntity::new,

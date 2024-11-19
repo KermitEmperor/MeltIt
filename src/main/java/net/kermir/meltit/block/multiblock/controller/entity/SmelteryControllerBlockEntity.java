@@ -249,8 +249,14 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     public void notifyChange(BlockPos pos, BlockState state) {
         if (level == null) return;
 
-        multiblock.structureCheck(level);
+        //multiblock.structureCheck(level);
 
         MeltIt.LOGGER.warn("oh no");
+    }
+
+    public boolean structureCheck() {
+        if (level == null) return false;
+
+        return multiblock.structureCheck(level);
     }
 }

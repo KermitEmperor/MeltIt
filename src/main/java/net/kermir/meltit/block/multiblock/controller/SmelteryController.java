@@ -50,7 +50,7 @@ public class SmelteryController extends AbstractFurnaceBlock {
             BlockEntity entity = pLevel.getBlockEntity(pPos);
             if(entity instanceof SmelteryControllerBlockEntity) {
                 if (pPlayer.getItemInHand(pHand).is(Items.STICK)) {
-                    ((SmelteryControllerBlockEntity)entity).notifyChange(pPos, pState);
+                    ((SmelteryControllerBlockEntity)entity).structureCheck();
                 } else {
                     NetworkHooks.openGui(((ServerPlayer)pPlayer), (SmelteryControllerBlockEntity)entity, pPos);
                 }

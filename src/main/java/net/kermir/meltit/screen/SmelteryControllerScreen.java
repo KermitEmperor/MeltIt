@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.networking.PacketChannel;
-import net.kermir.meltit.networking.packet.UpdateServerIndicies;
+import net.kermir.meltit.networking.packet.UpdateServerMenuIndiciesPacket;
 import net.kermir.meltit.screen.slot.SmelterySlot;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -119,7 +119,7 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
                 // HEeeeyyy did you know that Menu exists on server side too?
                 // Yeah I too found it out after...
                 // 3 GODDAMN HOURS OF DEBUG HELL
-                PacketChannel.sendToServer(new UpdateServerIndicies(this.indexOffset*3));
+                PacketChannel.sendToServer(new UpdateServerMenuIndiciesPacket(this.indexOffset*3));
             }
 
             this.previousIndexOffset = this.indexOffset;

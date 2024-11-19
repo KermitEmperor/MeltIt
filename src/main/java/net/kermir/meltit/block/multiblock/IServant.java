@@ -8,6 +8,7 @@ public interface IServant extends IForgeBlockEntity {
     BlockPos getMasterPos();
     void notifyMasterOfChange(BlockPos pos, BlockState state);
     boolean isValidMaster(IMaster master);
+    boolean hasMaster();
     void setPossibleMaster(IMaster master);
     void removeMaster(IMaster master);
 }

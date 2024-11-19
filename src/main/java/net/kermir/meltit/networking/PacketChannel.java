@@ -2,7 +2,8 @@ package net.kermir.meltit.networking;
 
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
-import net.kermir.meltit.networking.packet.UpdateServerIndicies;
+import net.kermir.meltit.networking.packet.RenderBoxPacket;
+import net.kermir.meltit.networking.packet.UpdateServerMenuIndiciesPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -35,12 +36,19 @@ public class PacketChannel {
                 .consumer(CloseSmelteryScreenPacket::handle)
                 .add();
 
-        net.messageBuilder(UpdateServerIndicies.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .encoder(UpdateServerIndicies::encode)
-                .decoder(UpdateServerIndicies::new)
-                .consumer(UpdateServerIndicies::handle)
+        net.messageBuilder(UpdateServerMenuIndiciesPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .encoder(UpdateServerMenuIndiciesPacket::encode)
+                .decoder(UpdateServerMenuIndiciesPacket::new)
+                .consumer(UpdateServerMenuIndiciesPacket::handle)
+                .add();
+
+        net.messageBuilder(RenderBoxPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(RenderBoxPacket::encode)
+                .decoder(RenderBoxPacket::new)
+                .consumer(RenderBoxPacket::handle)
                 .add();
     }
+
 
     public static <MSG> void sendToServer(MSG message) {
         INSTANCE.sendToServer(message);
