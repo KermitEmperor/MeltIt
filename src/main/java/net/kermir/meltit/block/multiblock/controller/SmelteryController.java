@@ -57,7 +57,8 @@ public class SmelteryController extends AbstractFurnaceBlock {
                     else
                         pPlayer.displayClientMessage(new TextComponent("Nope"), true);
                 } else {
-                    NetworkHooks.openGui(((ServerPlayer)pPlayer), (SmelteryControllerBlockEntity)entity, pPos);
+                    if (((SmelteryControllerBlockEntity)entity).structureCheck())
+                        NetworkHooks.openGui(((ServerPlayer)pPlayer), (SmelteryControllerBlockEntity)entity, pPos);
                 }
             } else {
                 //Communism

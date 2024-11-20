@@ -3,6 +3,7 @@ package net.kermir.meltit.networking;
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
 import net.kermir.meltit.networking.packet.RenderBoxPacket;
+import net.kermir.meltit.networking.packet.UpdateControllerSizePacket;
 import net.kermir.meltit.networking.packet.UpdateServerMenuIndiciesPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -46,6 +47,12 @@ public class PacketChannel {
                 .encoder(RenderBoxPacket::encode)
                 .decoder(RenderBoxPacket::new)
                 .consumer(RenderBoxPacket::handle)
+                .add();
+
+        net.messageBuilder(UpdateControllerSizePacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(UpdateControllerSizePacket::encode)
+                .decoder(UpdateControllerSizePacket::new)
+                .consumer(UpdateControllerSizePacket::handle)
                 .add();
     }
 

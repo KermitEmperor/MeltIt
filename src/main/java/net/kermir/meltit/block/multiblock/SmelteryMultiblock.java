@@ -37,8 +37,19 @@ public class SmelteryMultiblock {
     }
 
     private List<List<BlockPos>> rings;
+    private List<BlockPos> base;
+    //Utility
 
+    public int InteriorSize(Level level) {
+        structureCheck(level);
+        return this.width*this.height*this.depth;
+    }
+
+
+    //Structure
     public boolean structureCheck(Level pLevel) {
+        this.base = new ArrayList<>();
+        this.rings = new ArrayList<>();
         this.width=0;
         this.depth=0;
         this.height=0;
@@ -52,7 +63,7 @@ public class SmelteryMultiblock {
             if (pLevel.getBlockEntity(cPos.mutable().move(facing.getOpposite())) instanceof IServant) {
                 break;
             }
-            if (servant.hasMaster()) return false;
+            if (!servant.isValidMaster(controller)) return false;
             cPos.move(Direction.DOWN);
             minSupposedHeight++;
         }
@@ -106,7 +117,20 @@ public class SmelteryMultiblock {
                 Width:  {},
                 Depth:  {}""", this.height, this.width, this.depth);
 
+        assignMasters(pLevel);
         return true;
+    }
+
+    public void assignMasters(Level level) {
+        for (BlockPos pos : base) {
+            updateMaster(level, pos, true);
+        }
+
+        for (List<BlockPos> posList : rings) {
+            for (BlockPos pos : posList) {
+                updateMaster(level, pos, true);
+            }
+        }
     }
 
     public LinkedHashSet<BlockPos> getMBRing(Level pLevel, BlockPos startingPos, Direction pDirection) {
@@ -117,7 +141,7 @@ public class SmelteryMultiblock {
 
         for (int i = 0; i < this.width; i++) {
             if (pLevel.getBlockEntity(cPos) instanceof IServant servant) {
-                if (servant.hasMaster()) return null;
+                if (!servant.isValidMaster(controller)) return null;
                 ring.add(cPos.immutable());
                 cPos.move(pDirection.getClockWise());
             } else if (cPos.immutable().hashCode() == controllerPos.hashCode()) {
@@ -133,7 +157,7 @@ public class SmelteryMultiblock {
 
         for (int i = 0; i < this.depth; i++) {
             if (pLevel.getBlockEntity(cPos) instanceof IServant servant) {
-                if (servant.hasMaster()) return null;
+                if (!servant.isValidMaster(controller)) return null;
                 ring.add(cPos.immutable());
                 cPos.move(pDirection);
             } else {
@@ -145,7 +169,7 @@ public class SmelteryMultiblock {
 
         for (int i = 0; i < this.width; i++) {
             if (pLevel.getBlockEntity(cPos) instanceof IServant servant) {
-                if (servant.hasMaster()) return null;
+                if (!servant.isValidMaster(controller)) return null;
                 ring.add(cPos.immutable());
                 cPos.move(pDirection.getCounterClockWise());
             } else {
@@ -157,13 +181,17 @@ public class SmelteryMultiblock {
 
         for (int i = 0; i < this.depth; i++) {
             if (pLevel.getBlockEntity(cPos) instanceof IServant servant) {
-                if (servant.hasMaster()) return null;
+                if (!servant.isValidMaster(controller)) {
+                    return null;
+                }
                 ring.add(cPos.immutable());
                 cPos.move(pDirection.getOpposite());
             } else {
                 return null;
             }
         }
+
+        rings.add(new ArrayList<>(ring));
         return ring;
     }
 
@@ -178,11 +206,14 @@ public class SmelteryMultiblock {
         boolean ret = true;
 
         for (BlockPos pos : BlockPos.betweenClosed(leftCorner, rightCorner)) {
+            base.add(pos);
             if (!(level.getBlockEntity(pos) instanceof IServant)) {
                 ret = false;
+                base.clear();
                 break;
             }
         }
+
 
         return ret;
     }
@@ -218,7 +249,7 @@ public class SmelteryMultiblock {
         //go left first
         LinkedHashSet<BlockPos> ring = new LinkedHashSet<>();
         while (pLevel.getBlockEntity(cPos) instanceof IServant servant) {
-            if (servant.hasMaster()) return null;
+            if (!servant.isValidMaster(controller)) return null;
             if (checkAlmsostAbove(pLevel, cPos, pDirection.getCounterClockWise())) {
                 cPos.move(pDirection.getCounterClockWise());
                 break;
@@ -232,7 +263,7 @@ public class SmelteryMultiblock {
 
         //go right, start adding to the ring
         while (pLevel.getBlockEntity(cPos) instanceof IServant servant) {
-            if (servant.hasMaster()) return null;
+            if (!servant.isValidMaster(controller)) return null;
             //MeltIt.LOGGER.debug("going right {}", cPos);
             ring.add(cPos.immutable());
             this.width++;
@@ -250,7 +281,7 @@ public class SmelteryMultiblock {
 
         //go back (like further away from the controller)
         while (pLevel.getBlockEntity(cPos) instanceof IServant servant) {
-            if (servant.hasMaster()) return null;
+            if (!servant.isValidMaster(controller)) return null;
             //MeltIt.LOGGER.debug("going away the controller {}", cPos);
             ring.add(cPos.immutable());
             this.depth++;
@@ -268,7 +299,7 @@ public class SmelteryMultiblock {
 
         //go left
         while (pLevel.getBlockEntity(cPos) instanceof IServant servant) {
-            if (servant.hasMaster()) return null;
+            if (!servant.isValidMaster(controller)) return null;
             //MeltIt.LOGGER.debug("going left {}", cPos);
             ring.add(cPos.immutable());
             if (checkAlmsostAbove(pLevel, cPos, pDirection.getCounterClockWise())) {
@@ -285,7 +316,7 @@ public class SmelteryMultiblock {
 
         //come towards the controller
         while (pLevel.getBlockEntity(cPos) instanceof IServant servant) {
-            if (servant.hasMaster()) return null;
+            if (!servant.isValidMaster(controller)) return null;
             //MeltIt.LOGGER.debug("{}",cPos.immutable());
             BlockPos kPos = cPos.mutable().move(pDirection.getOpposite(), 1).move(Direction.UP);
             if (kPos.immutable().hashCode() == controllerPos.hashCode()) break;
@@ -315,7 +346,6 @@ public class SmelteryMultiblock {
         }
 
         BlockEntityHelper.get(IServant.class, level, pos).ifPresent(
-                //TODO force set master?
                 add ? blockentity -> blockentity.setPossibleMaster(controller) : blockentity -> blockentity.removeMaster(controller));
     }
 }

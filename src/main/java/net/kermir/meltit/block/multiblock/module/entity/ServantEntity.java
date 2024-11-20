@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -32,6 +33,7 @@ public class ServantEntity extends BlockEntity implements IServant {
     }
 
     public boolean hasMaster() {
+        validateMaster();
         return masterPos != null;
     }
 
@@ -39,6 +41,7 @@ public class ServantEntity extends BlockEntity implements IServant {
         masterPos = master;
         masterBlock = block;
         this.setChangedFast();
+        MeltIt.LOGGER.debug("master changed");
     }
 
     @SuppressWarnings("deprecation")
@@ -75,7 +78,12 @@ public class ServantEntity extends BlockEntity implements IServant {
     }
 
     @Override
-    public BlockPos getMasterPos() {
+    public boolean isMaster(BlockPos masterPos) {
+        return masterPos.equals(this.masterPos);
+    }
+
+    @Override
+    public @Nullable BlockPos getMasterPos() {
         return masterPos;
     }
 
@@ -91,12 +99,11 @@ public class ServantEntity extends BlockEntity implements IServant {
     @Override
     public void setPossibleMaster(IMaster master) {
         BlockPos newMaster = master.getMasterPos();
-        MeltIt.LOGGER.info("master setPossible called");
         if (newMaster.equals(this.masterPos)) {
             masterBlock = master.getMasterBlock().getBlock();
             this.setChangedFast();
         } else if (!validateMaster()) {
-            MeltIt.LOGGER.info("new master set");
+            MeltIt.LOGGER.debug("new master set");
             setMaster(newMaster, master.getMasterBlock().getBlock());
         }
 
@@ -126,9 +133,11 @@ public class ServantEntity extends BlockEntity implements IServant {
         }
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     protected CompoundTag writeMaster(CompoundTag tags) {
         if (masterPos != null && masterBlock != null) {
             tags.put(MASTER_POS, NbtUtils.writeBlockPos(masterPos.subtract(this.worldPosition)));
+            //noinspection deprecation
             tags.putString(MASTER_BLOCK, Registry.BLOCK.getKey(masterBlock).toString());
         }
         return tags;
@@ -143,18 +152,19 @@ public class ServantEntity extends BlockEntity implements IServant {
     }
 
     @Override
-    public void load(CompoundTag pTag) {
+    public void load(@NotNull CompoundTag pTag) {
         super.load(pTag);
         readMaster(pTag);
     }
 
 
     @Override
-    public void saveAdditional(CompoundTag nbt) {
+    public void saveAdditional(@NotNull CompoundTag nbt) {
         super.saveAdditional(nbt);
         writeMaster(nbt);
     }
 
+    @SuppressWarnings("unused")
     public boolean isClient() {
         return this.getLevel() != null && this.getLevel().isClientSide;
     }

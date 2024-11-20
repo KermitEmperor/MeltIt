@@ -7,6 +7,7 @@ import net.kermir.meltit.block.multiblock.ModifiedItemStackHandler;
 import net.kermir.meltit.block.multiblock.SmelteryMultiblock;
 import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
+import net.kermir.meltit.networking.packet.UpdateControllerSizePacket;
 import net.kermir.meltit.screen.SmelteryControllerMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,6 +15,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
@@ -22,7 +24,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -57,6 +58,7 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
         @Override
         public void setSize(int size) {
+            MeltIt.LOGGER.debug("{}",size);
             if (level != null && !level.isClientSide()) {
                 PacketChannel.sendToAllClients(new CloseSmelteryScreenPacket(worldPosition));
             }
@@ -108,19 +110,6 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
     @SuppressWarnings("unused")
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, SmelteryControllerBlockEntity pBlockEntity) {
-        BlockState blockStateBelow = pLevel.getBlockState(pPos.below());
-        if (blockStateBelow.is(Blocks.REDSTONE_BLOCK)) {
-            pBlockEntity.itemHandler.setSize(8);
-            pLevel.removeBlock(pPos.below(), false);
-        }
-        if (blockStateBelow.is(Blocks.COAL_BLOCK)) {
-            pBlockEntity.itemHandler.setSize(1);
-            pLevel.removeBlock(pPos.below(), false);
-        }
-        if (blockStateBelow.is(Blocks.GOLD_BLOCK)) {
-            pBlockEntity.itemHandler.setSize(30);
-            pLevel.removeBlock(pPos.below(), false);
-        }
     }
 
 
@@ -179,6 +168,10 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     }
 
     //Base needs
+
+    public void setSize(int size) {
+        this.itemHandler.setSize(size);
+    }
 
     @Override
     public @NotNull Component getDisplayName() {
@@ -252,14 +245,21 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     public void notifyChange(BlockPos pos, BlockState state) {
         if (level == null) return;
 
-        //multiblock.structureCheck(level);
+        resizeByStructure(level);
 
-        MeltIt.LOGGER.warn("oh no");
+        //MeltIt.LOGGER.warn("oh no");
+    }
+
+    public void resizeByStructure(Level level) {
+        int nextSize = multiblock.InteriorSize(level);
+        this.itemHandler.setSize(Mth.abs(nextSize));
+        if (!level.isClientSide())
+            PacketChannel.sendToAllClients(new UpdateControllerSizePacket(this.worldPosition, Mth.abs(nextSize)));
     }
 
     public boolean structureCheck() {
         if (level == null) return false;
-
+        resizeByStructure(level);
         return multiblock.structureCheck(level);
     }
 }
