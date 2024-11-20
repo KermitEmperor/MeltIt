@@ -3,7 +3,6 @@ package net.kermir.meltit.block.multiblock.controller.entity;
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.BlockEntityRegistry;
 import net.kermir.meltit.block.multiblock.IMaster;
-import net.kermir.meltit.block.multiblock.IServant;
 import net.kermir.meltit.block.multiblock.ModifiedItemStackHandler;
 import net.kermir.meltit.block.multiblock.SmelteryMultiblock;
 import net.kermir.meltit.networking.PacketChannel;
@@ -43,6 +42,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+@SuppressWarnings("unused")
 public class SmelteryControllerBlockEntity extends BlockEntity implements MenuProvider, IMaster {
     public final ModifiedItemStackHandler itemHandler = new ModifiedItemStackHandler(5, worldPosition) {
         @Override
@@ -69,9 +69,10 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
                 //what
                 stacks = NonNullList.of(ItemStack.EMPTY, combined.toArray(new ItemStack[0]));
-            } else if (stacks.size()==size) {
-                return;
-            } else if (stacks.size()>size) {
+            } else //noinspection StatementWithEmptyBody
+                if (stacks.size()==size) {
+            } else //noinspection ConstantValue
+                    if (stacks.size()>size) {
                 int differance = stacks.size()-size;
                 List<ItemStack> remainderItems = stacks.subList(stacks.size()-differance,stacks.size());
                 NonNullList<ItemStack> excess = NonNullList.create();
@@ -86,7 +87,7 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
         }
 
         @Override
-        public ItemStack getStackInSlot(int slot) {
+        public @NotNull ItemStack getStackInSlot(int slot) {
             if (slot < 0|| slot >= this.stacks.size()) {
                 return ItemStack.EMPTY;
             }
@@ -98,24 +99,25 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
-    private SmelteryMultiblock multiblock;
+    private final SmelteryMultiblock multiblock;
 
     public SmelteryControllerBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(BlockEntityRegistry.SMELTERY_CONTROLLER_BLOCK_ENTITY.get(), pPos, pBlockState);
         this.multiblock = new SmelteryMultiblock(this, pPos, pBlockState);
     }
 
+    @SuppressWarnings("unused")
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, SmelteryControllerBlockEntity pBlockEntity) {
         BlockState blockStateBelow = pLevel.getBlockState(pPos.below());
-        if (blockStateBelow.equals(Blocks.REDSTONE_BLOCK.defaultBlockState())) {
+        if (blockStateBelow.is(Blocks.REDSTONE_BLOCK)) {
             pBlockEntity.itemHandler.setSize(8);
             pLevel.removeBlock(pPos.below(), false);
         }
-        if (blockStateBelow.equals(Blocks.COAL_BLOCK.defaultBlockState())) {
+        if (blockStateBelow.is(Blocks.COAL_BLOCK)) {
             pBlockEntity.itemHandler.setSize(1);
             pLevel.removeBlock(pPos.below(), false);
         }
-        if (blockStateBelow.equals(Blocks.GOLD_BLOCK.defaultBlockState())) {
+        if (blockStateBelow.is(Blocks.GOLD_BLOCK)) {
             pBlockEntity.itemHandler.setSize(30);
             pLevel.removeBlock(pPos.below(), false);
         }
@@ -125,7 +127,8 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
     //etc
 
-    public ItemStack safeInsert(int slotIndex, ItemStack pStack, int pIncrement) {;
+    @SuppressWarnings("UnusedReturnValue")
+    public ItemStack safeInsert(int slotIndex, ItemStack pStack, int pIncrement) {
         if (!pStack.isEmpty()) {
             ItemStack itemstack = this.itemHandler.getStackInSlot(slotIndex);
             int i = Math.min(Math.min(pIncrement, pStack.getCount()), this.itemHandler.getSlotLimit(slotIndex) - itemstack.getCount());
@@ -164,11 +167,10 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
         }
     }
 
-    public ItemStack safeTake(int slotIndex ,int pCount, int pDecrement, Player pPlayer) {
+    @SuppressWarnings("UnusedReturnValue")
+    public ItemStack safeTake(int slotIndex , int pCount, int pDecrement, Player pPlayer) {
         Optional<ItemStack> optional = this.tryRemove(slotIndex,pCount, pDecrement, pPlayer);
-        optional.ifPresent((p_150655_) -> {
-            setChanged();
-        });
+        optional.ifPresent((p_150655_) -> setChanged());
         return optional.orElse(ItemStack.EMPTY);
     }
 
@@ -185,7 +187,7 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
     @Nullable
     @Override
-    public AbstractContainerMenu createMenu(int pContainerId, Inventory pPlayerInventory, Player pPlayer) {
+    public AbstractContainerMenu createMenu(int pContainerId, @NotNull Inventory pPlayerInventory, @NotNull Player pPlayer) {
         return new SmelteryControllerMenu(pContainerId, pPlayerInventory, this);
     }
 
@@ -219,7 +221,7 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     }
 
     @Override
-    public void load(CompoundTag nbt) {
+    public void load(@NotNull CompoundTag nbt) {
         super.load(nbt);
         itemHandler.deserializeNBT(nbt.getCompound("inventory"));
     }
@@ -230,7 +232,8 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
             inventory.setItem(i, itemHandler.getStackInSlot(i));
         }
 
-        Containers.dropContents(this.level, this.worldPosition, inventory);
+        if (this.level != null)
+            Containers.dropContents(this.level, this.worldPosition, inventory);
     }
 
     public void dropExcess(NonNullList<ItemStack> items) {

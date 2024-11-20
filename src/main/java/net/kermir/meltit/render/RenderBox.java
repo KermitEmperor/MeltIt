@@ -1,14 +1,16 @@
 package net.kermir.meltit.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.kermir.meltit.MeltIt;
+import net.kermir.meltit.networking.PacketChannel;
+import net.kermir.meltit.networking.packet.RenderBoxPacket;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -18,13 +20,47 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 @Mod.EventBusSubscriber(modid = MeltIt.MOD_ID)
 public class RenderBox {
-    private static HashMap<BlockPos, Float> blockPosList = new HashMap<>();
+    private static final HashMap<BlockPos, ArrayList<Float>> blockPosList = new HashMap<>();
 
-    public static void addPosition(BlockPos pos) {
-        blockPosList.put(pos, 1F);
-        MeltIt.LOGGER.debug("{}",pos);
+
+    /**
+     * values need to be between 0 and 1
+    */
+    public static void addPosition(BlockPos pos, float initialAlpha, float red, float green, float blue, float extraSize) {
+        ArrayList<Float> initialList = new ArrayList<>();
+        initialList.add(initialAlpha);
+        initialList.add(red);
+        initialList.add(green);
+        initialList.add(blue);
+        initialList.add(extraSize);
+        blockPosList.put(pos, initialList);
+    }
+
+    public static void sendToRender(Level level, BlockPos pos, float initialAlpha, float red, float green, float blue, float extraSize) {
+        if (!(level.isClientSide()))
+            PacketChannel.sendToAllClients(new RenderBoxPacket(
+                    pos,
+                    initialAlpha,
+                    red,
+                    green,
+                    blue,
+                    extraSize
+            ));
+    }
+
+    public static void sendToRender(Level level, BlockPos pos, float red, float green, float blue, float extraSize) {
+        sendToRender(level, pos,1F, red, green, blue, extraSize);
+    }
+
+    public static void sendToRender(Level level, BlockPos pos, float red, float green, float blue) {
+        sendToRender(level, pos,1F, red, green, blue, 0F);
+    }
+
+    public static void sendToRender(Level level, BlockPos pos) {
+        sendToRender(level, pos,1F,1F,0.7F, 0F, 0F);
     }
 
     @SubscribeEvent
@@ -46,10 +82,19 @@ public class RenderBox {
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         // Render the box (default line box method)
         for (BlockPos pos : new HashSet<>(blockPosList.keySet())) {
-            float alpha = blockPosList.get(pos);
-            AABB box = new AABB(pos).inflate(0.001); // Define the box
+            ArrayList<Float> data = blockPosList.get(pos);
+            float alpha = data.get(0);
+            float red = data.get(1);
+            float green = data.get(2);
+            float blue = data.get(3);
+            float extraSize = data.get(4);
 
-            blockPosList.put(pos, (float) (alpha - 0.003));
+
+            AABB box = new AABB(pos).inflate(0.001 + extraSize); // Define the box
+
+
+            data.set(0, (float) (alpha - 0.003));
+            blockPosList.put(pos, data);
 
             if (alpha <= 0) {
                 blockPosList.remove(pos);
@@ -60,9 +105,9 @@ public class RenderBox {
                     poseStack,
                     bufferSource.getBuffer(RenderType.LINES),
                     box,
-                    1.0f,
-                    0.7f,
-                    0.0f,
+                    red,
+                    green,
+                    blue,
                     alpha // RGBA: Yellow Box
             );
         }

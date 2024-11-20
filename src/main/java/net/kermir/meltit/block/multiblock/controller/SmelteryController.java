@@ -4,6 +4,7 @@ import net.kermir.meltit.block.BlockEntityRegistry;
 import net.kermir.meltit.block.multiblock.controller.entity.SmelteryControllerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -50,7 +51,11 @@ public class SmelteryController extends AbstractFurnaceBlock {
             BlockEntity entity = pLevel.getBlockEntity(pPos);
             if(entity instanceof SmelteryControllerBlockEntity) {
                 if (pPlayer.getItemInHand(pHand).is(Items.STICK)) {
-                    ((SmelteryControllerBlockEntity)entity).structureCheck();
+
+                    if (((SmelteryControllerBlockEntity)entity).structureCheck())
+                        pPlayer.displayClientMessage(new TextComponent("Succeeded"), true);
+                    else
+                        pPlayer.displayClientMessage(new TextComponent("Nope"), true);
                 } else {
                     NetworkHooks.openGui(((ServerPlayer)pPlayer), (SmelteryControllerBlockEntity)entity, pPos);
                 }
