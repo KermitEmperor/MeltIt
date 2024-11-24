@@ -45,9 +45,8 @@ public class SmelteryMultiblock {
         return this.width*this.height*this.depth;
     }
 
-
     //Structure
-    public boolean structureCheck(Level pLevel) {
+    private boolean structureBlockCheck(Level pLevel) {
         this.base = new ArrayList<>();
         this.rings = new ArrayList<>();
         this.width=0;
@@ -74,7 +73,10 @@ public class SmelteryMultiblock {
 
         LinkedHashSet<BlockPos> ringBaseSet = getMBRingBase(pLevel, cPos.immutable(), facing.getOpposite());
         if (ringBaseSet == null) return false;
-        List<BlockPos> ringBase = ringBaseSet.stream().toList();
+        List<BlockPos> ringBase = new ArrayList<>(ringBaseSet);
+        for (BlockPos pos : ringBase) {
+            MeltIt.LOGGER.debug("ASADAA {}" ,pos);
+        }
 
         //jesus christ
 
@@ -117,20 +119,42 @@ public class SmelteryMultiblock {
                 Width:  {},
                 Depth:  {}""", this.height, this.width, this.depth);
 
-        assignMasters(pLevel);
         return true;
     }
 
-    public void assignMasters(Level level) {
-        for (BlockPos pos : base) {
-            updateMaster(level, pos, true);
+    public boolean structureCheck(Level pLevel) {
+        boolean ret = structureBlockCheck(pLevel);
+        if (ret) {
+            assignMasters(pLevel);
+        } else {
+            //TODO doesn't work on everything
+            deassignMasters(pLevel);
         }
+        return ret;
+    }
 
-        for (List<BlockPos> posList : rings) {
-            for (BlockPos pos : posList) {
-                updateMaster(level, pos, true);
+    public void assignMasters(Level level) {
+        updateMasters(level, true);
+    }
+
+    public void deassignMasters(Level level) {
+        updateMasters(level, false);
+    }
+
+    public void updateMasters(Level level, boolean add) {
+        if (base != null)
+            for (BlockPos pos : base) {
+                updateMaster(level, pos, add);
             }
-        }
+
+        if (rings != null)
+            for (List<BlockPos> posList : rings) {
+                for (BlockPos pos : posList) {
+                    MeltIt.LOGGER.debug("yes {} amd {}", pos, add);
+                    updateMaster(level, pos, add);
+                }
+            }
+
     }
 
     public LinkedHashSet<BlockPos> getMBRing(Level pLevel, BlockPos startingPos, Direction pDirection) {
@@ -206,8 +230,8 @@ public class SmelteryMultiblock {
         boolean ret = true;
 
         for (BlockPos pos : BlockPos.betweenClosed(leftCorner, rightCorner)) {
-            base.add(pos);
-            if (!(level.getBlockEntity(pos) instanceof IServant)) {
+            base.add(pos.immutable());
+            if (!(level.getBlockEntity(pos.immutable()) instanceof IServant)) {
                 ret = false;
                 base.clear();
                 break;

@@ -21,12 +21,12 @@ public class SmelteryModuleBlockEntity extends ServantEntity {
 
     public static void updateCloseBlocks(Level level, BlockPos pos, BlockState state) {
         for (Direction direction : Direction.values()) {
-            BlockEntity blockEntity = level.getBlockEntity(pos.relative(direction));
+            BlockEntity blockEntity = level.getBlockEntity(pos.relative(direction, 1));
             if (blockEntity instanceof IMaster master) {
                 master.notifyChange(pos, state);
                 break;
             } else if (blockEntity instanceof SmelteryModuleBlockEntity module && module.hasMaster()) {
-                module.notifyMasterOfChange(pos, state);
+                module.notifyMasterOfChange(pos, state, false);
                 break;
             }
         }

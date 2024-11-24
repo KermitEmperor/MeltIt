@@ -3,7 +3,7 @@ package net.kermir.meltit.block.multiblock.controller.entity;
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.BlockEntityRegistry;
 import net.kermir.meltit.block.multiblock.IMaster;
-import net.kermir.meltit.block.multiblock.ModifiedItemStackHandler;
+import net.kermir.meltit.util.ResizeableItemStackHandler;
 import net.kermir.meltit.block.multiblock.SmelteryMultiblock;
 import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
@@ -38,14 +38,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 public class SmelteryControllerBlockEntity extends BlockEntity implements MenuProvider, IMaster {
-    public final ModifiedItemStackHandler itemHandler = new ModifiedItemStackHandler(5, worldPosition) {
+    public final ResizeableItemStackHandler itemHandler = new ResizeableItemStackHandler(5) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
@@ -57,51 +58,36 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
         }
 
         @Override
-        public void setSize(int size) {
-            MeltIt.LOGGER.debug("{}",size);
+        public void onSizeChanged(int size) {
             if (level != null && !level.isClientSide()) {
                 PacketChannel.sendToAllClients(new CloseSmelteryScreenPacket(worldPosition));
             }
-            if (size>stacks.size()) {
-                List<ItemStack> combined = new ArrayList<>();
-                List<ItemStack> previous = stacks;
-                List<ItemStack> additional = NonNullList.withSize(size-stacks.size(),ItemStack.EMPTY);
-                combined.addAll(previous);
-                combined.addAll(additional);
-
-                //what
-                stacks = NonNullList.of(ItemStack.EMPTY, combined.toArray(new ItemStack[0]));
-            } else //noinspection StatementWithEmptyBody
-                if (stacks.size()==size) {
-            } else //noinspection ConstantValue
-                    if (stacks.size()>size) {
-                int differance = stacks.size()-size;
-                List<ItemStack> remainderItems = stacks.subList(stacks.size()-differance,stacks.size());
-                NonNullList<ItemStack> excess = NonNullList.create();
-                excess.addAll(remainderItems);
-                dropExcess(excess);
-
-                stacks = NonNullList.of(ItemStack.EMPTY, stacks.subList(0, stacks.size()-differance).toArray(new ItemStack[0]));
-
-            } else {
-                super.setSize(size);
+            if (size < heatMap.size() ) {
+                //TODO continue making the heat map here
             }
         }
 
         @Override
-        public @NotNull ItemStack getStackInSlot(int slot) {
-            if (slot < 0|| slot >= this.stacks.size()) {
-                return ItemStack.EMPTY;
-            }
-            return super.getStackInSlot(slot);
+        public void onSizeGotSmaller(int size, NonNullList<ItemStack> excessItems) {
+            dropExcess(excessItems);
+            MeltIt.LOGGER.debug("Excess Items dropped");
         }
     };
 
     private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
+
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     private final SmelteryMultiblock multiblock;
+
+    enum HeatState {
+        HEATING,
+        UNMELTABLE,
+        TOO_COLD,
+        NO_SPACE
+    }
+    private final LinkedHashMap<Float, HeatState> heatMap = new LinkedHashMap<>();
 
     public SmelteryControllerBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(BlockEntityRegistry.SMELTERY_CONTROLLER_BLOCK_ENTITY.get(), pPos, pBlockState);
@@ -110,9 +96,8 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
     @SuppressWarnings("unused")
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, SmelteryControllerBlockEntity pBlockEntity) {
+
     }
-
-
 
     //etc
 
@@ -241,20 +226,23 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
         return nbt;
     }
 
+    public void destroyMultiblock(Level level) {
+        multiblock.deassignMasters(level);
+    }
+
     @Override
     public void notifyChange(BlockPos pos, BlockState state) {
         if (level == null) return;
 
         resizeByStructure(level);
-
-        //MeltIt.LOGGER.warn("oh no");
     }
 
     public void resizeByStructure(Level level) {
-        int nextSize = multiblock.InteriorSize(level);
-        this.itemHandler.setSize(Mth.abs(nextSize));
+        int nextSize = Mth.abs(multiblock.InteriorSize(level));
+        this.itemHandler.setSize(nextSize);
+        MeltIt.LOGGER.debug("VA");
         if (!level.isClientSide())
-            PacketChannel.sendToAllClients(new UpdateControllerSizePacket(this.worldPosition, Mth.abs(nextSize)));
+            PacketChannel.sendToAllClients(new UpdateControllerSizePacket(this.worldPosition, nextSize));
     }
 
     public boolean structureCheck() {

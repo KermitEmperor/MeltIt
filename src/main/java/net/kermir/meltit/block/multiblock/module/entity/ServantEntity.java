@@ -87,10 +87,15 @@ public class ServantEntity extends BlockEntity implements IServant {
         return masterPos;
     }
 
+
     @Override
-    public void notifyMasterOfChange(BlockPos pos, BlockState state) {
+    public void notifyMasterOfChange(BlockPos pos, BlockState state, boolean shouldDeleteItself) {
+        if (shouldDeleteItself) {
+            if (level != null) level.removeBlockEntity(pos);
+        }
         if (validateMaster()) {
             if (masterPos == null) return;
+            MeltIt.LOGGER.debug("AE");
             BlockEntityHelper.get(IMaster.class, level, masterPos).ifPresent(blockEntity -> blockEntity.notifyChange(pos, state));
         }
     }

@@ -7,7 +7,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
@@ -24,6 +26,8 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class SmelteryController extends AbstractFurnaceBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
@@ -39,6 +43,7 @@ public class SmelteryController extends AbstractFurnaceBlock {
             BlockEntity blockEntity = pLevel.getBlockEntity(pPos);
             if (blockEntity instanceof SmelteryControllerBlockEntity) {
                 ((SmelteryControllerBlockEntity) blockEntity).drops();
+                ((SmelteryControllerBlockEntity) blockEntity).destroyMultiblock(pLevel);
             }
         }
         super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
@@ -85,5 +90,12 @@ public class SmelteryController extends AbstractFurnaceBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level pLevel, @NotNull BlockState pState, @NotNull BlockEntityType<T> pBlockEntityType) {
         return createTickerHelper(pBlockEntityType, BlockEntityRegistry.SMELTERY_CONTROLLER_BLOCK_ENTITY.get(),
                 SmelteryControllerBlockEntity::tick);
+    }
+
+    @Override
+    public void setPlacedBy(Level pLevel, BlockPos pPos, BlockState pState, LivingEntity pPlacer, ItemStack pStack) {
+        ((SmelteryControllerBlockEntity) Objects.requireNonNull(pLevel.getBlockEntity(pPos))).notifyChange(pPos, pState);
+
+        super.setPlacedBy(pLevel, pPos, pState, pPlacer, pStack);
     }
 }

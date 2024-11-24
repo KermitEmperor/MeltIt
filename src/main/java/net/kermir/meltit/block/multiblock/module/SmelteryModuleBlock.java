@@ -1,5 +1,6 @@
 package net.kermir.meltit.block.multiblock.module;
 
+import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.multiblock.module.entity.SmelteryModuleBlockEntity;
 import net.kermir.meltit.util.BlockEntityHelper;
 import net.minecraft.core.BlockPos;
@@ -51,8 +52,7 @@ public class SmelteryModuleBlock extends Block implements EntityBlock {
                 }
             } else {
                 // block changed, tell the master then ditch the block entity
-                BlockEntityHelper.get(SmelteryModuleBlockEntity.class, pLevel, pPos).ifPresent(te -> te.notifyMasterOfChange(pPos, pNewState));
-                pLevel.removeBlockEntity(pPos);
+                BlockEntityHelper.get(SmelteryModuleBlockEntity.class, pLevel, pPos).ifPresent(te -> te.notifyMasterOfChange(pPos, pNewState, true));
             }
         }
     }

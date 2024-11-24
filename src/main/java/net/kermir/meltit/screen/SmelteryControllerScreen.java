@@ -2,10 +2,12 @@ package net.kermir.meltit.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Vector3f;
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.networking.packet.UpdateServerMenuIndiciesPacket;
 import net.kermir.meltit.screen.slot.SmelterySlot;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
@@ -47,6 +49,8 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
     private static final int smelterySlotImageHeight = 18;
     private static final int blankSlotImageWidth = 22;
     private static final int blankSlotImageHeight = 18;
+    private static final int heatStateHeight = 16;
+    private static final int heatStateWidth = 3;
     public static final int scrollbarMax = scrollBarImageHeight-scrollButtonImageHeight-3;
 
     @Override
@@ -73,19 +77,43 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
             }
         }
 
-
-
-
         //slots
         int currentSlot = 0;
         for (Slot slot_og : this.getMenu().slots) {
             if (currentSlot < 24) {
                 if (slot_og instanceof SmelterySlot) {
+                    //slot
                     this.blit(pPoseStack, slot_og.x+x-5, slot_og.y+y-1, 0, 166, smelterySlotImageWidth,smelterySlotImageHeight);
                     currentSlot++;
+
+                    //heat
+
+                    if (slot_og.hasItem()) {
+                        int xpos = slot_og.x+x-4;
+                        int ypos = slot_og.y+y;
+                        int UOffset = 44;
+                        //pPoseStack.mulPose(Vector3f.ZN.rotationDegrees(180));
+                        //blit(pPoseStack, slot_og.x+x-4, slot_og.y+y, 44, 166-16, heatStateWidth,-16);
+                        drawHeatState(pPoseStack, 0.8F, xpos, ypos, UOffset, 166, heatStateWidth, heatStateHeight);
+                    }
                 }
             }
         }
+    }
+
+    private void drawHeatState(PoseStack poseStack, float progress ,int x,int y,int UOffset, int VOffset, int UWidth, int VHeight) {
+        int height;
+        if (progress > 1) {
+            height = VHeight;
+        } else if (progress < 0) {
+            height = 0;
+        } else {
+            // add an extra 0.5 so it rounds instead of flooring
+            height = (int)(progress * VHeight + 0.5);
+        }
+        // amount to offset element by for the height
+        int deltaY = VHeight - height;
+        blit(poseStack, x, y + deltaY, UOffset, VOffset + deltaY, UWidth, height, 256, 256);
     }
 
 
