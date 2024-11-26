@@ -1,6 +1,7 @@
 package net.kermir.meltit.screen;
 
 import net.kermir.meltit.block.BlockRegistry;
+import net.kermir.meltit.block.multiblock.controller.HeatableItemStackHandler;
 import net.kermir.meltit.util.ResizeableItemStackHandler;
 import net.kermir.meltit.block.multiblock.controller.entity.SmelteryControllerBlockEntity;
 import net.kermir.meltit.screen.slot.SmelterySlot;
@@ -53,19 +54,19 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
         addPlayerHotbar(pPlayerInv);
 
         int finalIndexOffset = indexOffset;
-        this.blockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(handler -> {
-            ResizeableItemStackHandler stackHandler = (ResizeableItemStackHandler) handler;
+        this.blockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(hndlr -> {
+            HeatableItemStackHandler handler = (HeatableItemStackHandler) hndlr;
             boolean isBig = handler.getSlots() > 24;
             int displaceXAmount = isBig ? -24 : 0;
             int row = -1;
-            for (int i = 0; i < stackHandler.getSlots() ;i++) {
+            for (int i = 0; i < hndlr.getSlots() ;i++) {
                 //this pain runs on both client and server and having a mismatch will cause headaches
                 //This can get desynced if handler size changes
-                if (stackHandler.getSlots() > 8) {
+                if (hndlr.getSlots() > 8) {
                     int modul = i%3;
                     int posmodul = 2 - modul;
                     if (modul == 0) row++;
-                    if ((i < 24) && ((i+finalIndexOffset) < stackHandler.getSlots())) {
+                    if ((i < 24) && ((i+finalIndexOffset) < hndlr.getSlots())) {
                         this.addSlot(new SmelterySlot(handler, i + finalIndexOffset, -17-(posmodul*22)+displaceXAmount, row*18+1));
                     }
                 } else {

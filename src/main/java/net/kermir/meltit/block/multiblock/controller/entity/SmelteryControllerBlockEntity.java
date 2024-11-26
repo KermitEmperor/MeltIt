@@ -3,6 +3,7 @@ package net.kermir.meltit.block.multiblock.controller.entity;
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.BlockEntityRegistry;
 import net.kermir.meltit.block.multiblock.IMaster;
+import net.kermir.meltit.block.multiblock.controller.HeatableItemStackHandler;
 import net.kermir.meltit.util.ResizeableItemStackHandler;
 import net.kermir.meltit.block.multiblock.SmelteryMultiblock;
 import net.kermir.meltit.networking.PacketChannel;
@@ -46,7 +47,7 @@ import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 public class SmelteryControllerBlockEntity extends BlockEntity implements MenuProvider, IMaster {
-    public final ResizeableItemStackHandler itemHandler = new ResizeableItemStackHandler(5) {
+    public final HeatableItemStackHandler itemHandler = new HeatableItemStackHandler(5) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
@@ -61,9 +62,6 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
         public void onSizeChanged(int size) {
             if (level != null && !level.isClientSide()) {
                 PacketChannel.sendToAllClients(new CloseSmelteryScreenPacket(worldPosition));
-            }
-            if (size < heatMap.size() ) {
-                //TODO continue making the heat map here
             }
         }
 
@@ -81,14 +79,6 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
     private final SmelteryMultiblock multiblock;
 
-    enum HeatState {
-        HEATING,
-        UNMELTABLE,
-        TOO_COLD,
-        NO_SPACE
-    }
-    private final LinkedHashMap<Float, HeatState> heatMap = new LinkedHashMap<>();
-
     public SmelteryControllerBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(BlockEntityRegistry.SMELTERY_CONTROLLER_BLOCK_ENTITY.get(), pPos, pBlockState);
         this.multiblock = new SmelteryMultiblock(this, pPos, pBlockState);
@@ -96,7 +86,18 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
     @SuppressWarnings("unused")
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, SmelteryControllerBlockEntity pBlockEntity) {
+        pBlockEntity.useItemHandler(hndlr -> {
+            HeatableItemStackHandler handler = (HeatableItemStackHandler) hndlr;
 
+            for (int i = 0; i < handler.getSlots(); i++) {
+                if (i >= handler.getHeatMapSize()) continue;
+                if (!handler.getStackInSlot(i).isEmpty()) {
+                    handler.incrementProgress(i, 0.05F);
+                } else {
+                    handler.resetHeatStateInSlot(i);
+                }
+            }
+        });
     }
 
     //etc

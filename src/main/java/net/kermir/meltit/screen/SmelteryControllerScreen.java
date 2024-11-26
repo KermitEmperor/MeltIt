@@ -81,7 +81,7 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
         int currentSlot = 0;
         for (Slot slot_og : this.getMenu().slots) {
             if (currentSlot < 24) {
-                if (slot_og instanceof SmelterySlot) {
+                if (slot_og instanceof SmelterySlot smelterySlot) {
                     //slot
                     this.blit(pPoseStack, slot_og.x+x-5, slot_og.y+y-1, 0, 166, smelterySlotImageWidth,smelterySlotImageHeight);
                     currentSlot++;
@@ -94,7 +94,8 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
                         int UOffset = 44;
                         //pPoseStack.mulPose(Vector3f.ZN.rotationDegrees(180));
                         //blit(pPoseStack, slot_og.x+x-4, slot_og.y+y, 44, 166-16, heatStateWidth,-16);
-                        drawHeatState(pPoseStack, 0.8F, xpos, ypos, UOffset, 166, heatStateWidth, heatStateHeight);
+
+                        drawHeatState(pPoseStack, smelterySlot.getProgressInSlot(), xpos, ypos, UOffset, 166, heatStateWidth, heatStateHeight);
                     }
                 }
             }
