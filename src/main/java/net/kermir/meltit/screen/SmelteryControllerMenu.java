@@ -1,10 +1,9 @@
 package net.kermir.meltit.screen;
 
 import net.kermir.meltit.block.BlockRegistry;
-import net.kermir.meltit.block.multiblock.controller.HeatableItemStackHandler;
-import net.kermir.meltit.util.ResizeableItemStackHandler;
 import net.kermir.meltit.block.multiblock.controller.entity.SmelteryControllerBlockEntity;
 import net.kermir.meltit.screen.slot.SmelterySlot;
+import net.kermir.meltit.util.ResizeableItemStackHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -55,7 +54,7 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
 
         int finalIndexOffset = indexOffset;
         this.blockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(hndlr -> {
-            HeatableItemStackHandler handler = (HeatableItemStackHandler) hndlr;
+            ResizeableItemStackHandler handler = (ResizeableItemStackHandler) hndlr;
             boolean isBig = handler.getSlots() > 24;
             int displaceXAmount = isBig ? -24 : 0;
             int row = -1;
