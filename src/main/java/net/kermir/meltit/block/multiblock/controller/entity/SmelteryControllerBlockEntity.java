@@ -72,6 +72,7 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     public final HeatHandler heatHandler = new HeatHandler(0);
 
     private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
+    private LazyOptional<HeatHandler> lazyHeatHandler = LazyOptional.empty();
 
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
@@ -87,6 +88,12 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, SmelteryControllerBlockEntity pBlockEntity) {
         pBlockEntity.useItemHandler(hndlr -> {
             ResizeableItemStackHandler handler = (ResizeableItemStackHandler) hndlr;
+
+            for (int i = 0; i < handler.getSlots(); i++) {
+                if (!handler.getStackInSlot(i).isEmpty())
+                    pBlockEntity.heatHandler.forceProgress(i, 0.05F);
+                else pBlockEntity.heatHandler.setProgress(i, 0F);
+            }
         });
     }
 
@@ -175,12 +182,14 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     public void onLoad() {
         super.onLoad();
         lazyItemHandler = LazyOptional.of(() -> itemHandler);
+        lazyHeatHandler = LazyOptional.of(() -> heatHandler);
     }
 
     @Override
     public void invalidateCaps()  {
         super.invalidateCaps();
         lazyItemHandler.invalidate();
+        lazyHeatHandler.invalidate();
     }
 
     @Override

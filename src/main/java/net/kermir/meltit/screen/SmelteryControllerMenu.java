@@ -66,10 +66,10 @@ public class SmelteryControllerMenu extends AbstractContainerMenu {
                     int posmodul = 2 - modul;
                     if (modul == 0) row++;
                     if ((i < 24) && ((i+finalIndexOffset) < hndlr.getSlots())) {
-                        this.addSlot(new SmelterySlot(handler, i + finalIndexOffset, -17-(posmodul*22)+displaceXAmount, row*18+1));
+                        this.addSlot(new SmelterySlot(handler, this.blockEntity.heatHandler,i + finalIndexOffset, -17-(posmodul*22)+displaceXAmount, row*18+1));
                     }
                 } else {
-                    this.addSlot(new SmelterySlot(handler, i, -17, i*18+1));
+                    this.addSlot(new SmelterySlot(handler, this.blockEntity.heatHandler, i, -17, i*18+1));
                 }
             }
         });

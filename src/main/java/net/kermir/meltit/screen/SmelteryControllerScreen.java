@@ -95,7 +95,7 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
                         //pPoseStack.mulPose(Vector3f.ZN.rotationDegrees(180));
                         //blit(pPoseStack, slot_og.x+x-4, slot_og.y+y, 44, 166-16, heatStateWidth,-16);
 
-                        drawHeatState(pPoseStack, 0.7F, xpos, ypos, UOffset, 166, heatStateWidth, heatStateHeight);
+                        drawHeatState(pPoseStack, smelterySlot.getProgress(), xpos, ypos, UOffset, 166, heatStateWidth, heatStateHeight);
                     }
                 }
             }

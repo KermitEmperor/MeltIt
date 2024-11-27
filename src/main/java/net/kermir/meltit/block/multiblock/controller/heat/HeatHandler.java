@@ -2,6 +2,7 @@ package net.kermir.meltit.block.multiblock.controller.heat;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.util.Mth;
 import net.minecraftforge.common.util.INBTSerializable;
 import oshi.util.tuples.Pair;
 
@@ -23,7 +24,8 @@ public class HeatHandler implements INBTSerializable<CompoundTag> {
                 heatMap.clear();
                 return;
             }
-            heatMap.retainAll(heatMap.subList(0, newSize-1));
+
+            heatMap.retainAll(heatMap.subList(0, newSize));
         }
     }
 
@@ -45,6 +47,7 @@ public class HeatHandler implements INBTSerializable<CompoundTag> {
 
     @Override
     public CompoundTag serializeNBT() {
+
         CompoundTag nbt = new CompoundTag();
         for (Pair<HeatState, Float> pair : heatMap) {
             CompoundTag stateTag = new CompoundTag();
@@ -55,6 +58,45 @@ public class HeatHandler implements INBTSerializable<CompoundTag> {
 
         return nbt;
     }
+
+    public boolean validateSlot(int slot) {
+        return (slot < heatMap.size());
+    }
+
+    public void incrementProgress(int slot, float amount) {
+        if (!validateSlot(slot)) return;
+        Pair<HeatState, Float> pair = heatMap.get(slot);
+
+        if (pair.getA().equals(HeatState.MELTING)) {
+            heatMap.set(slot, pair(HeatState.MELTING,  Mth.clamp(pair.getB()+amount, 0F, 1F)));
+        }
+    }
+
+    public void forceProgress(int slot, float amount) {
+        if (!validateSlot(slot)) return;
+        Pair<HeatState, Float> pair = heatMap.get(slot);
+
+        heatMap.set(slot, pair(HeatState.MELTING, Mth.clamp(pair.getB()+amount, 0F, 1F)));
+    }
+
+    public void setProgress(int slot, float amount) {
+        setProgress(slot, HeatState.MELTING, amount);
+    }
+
+    public void setProgress(int slot, HeatState state, float amount) {
+        if (!validateSlot(slot)) return;
+        Pair<HeatState, Float> pair = heatMap.get(slot);
+
+        heatMap.set(slot, pair(state, Mth.clamp(amount, 0F, 1F)));
+    }
+
+    public float getProgress(int slot) {
+        if (validateSlot(slot))
+            return heatMap.get(slot).getB();
+        else
+            return 0F;
+    }
+
 
  /*
     @Override
@@ -81,6 +123,7 @@ public class HeatHandler implements INBTSerializable<CompoundTag> {
     public void deserializeNBT(CompoundTag nbt) {
         heatMap.clear();
         for (int i = 0; i < nbt.size(); i++) {
+            //TODO this
             heatMap.add(pair(HeatState.valueOf(nbt.getString("State")), nbt.getFloat("Progress")));
         }
     }
