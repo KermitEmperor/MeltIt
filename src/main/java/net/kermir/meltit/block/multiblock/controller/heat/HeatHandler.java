@@ -1,13 +1,11 @@
 package net.kermir.meltit.block.multiblock.controller.heat;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.util.Mth;
 import net.minecraftforge.common.util.INBTSerializable;
 import oshi.util.tuples.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class HeatHandler implements INBTSerializable<CompoundTag> {
@@ -80,10 +78,10 @@ public class HeatHandler implements INBTSerializable<CompoundTag> {
     }
 
     public void setProgress(int slot, float amount) {
-        setProgress(slot, HeatState.MELTING, amount);
+        setPairData(slot, HeatState.MELTING, amount);
     }
 
-    public void setProgress(int slot, HeatState state, float amount) {
+    public void setPairData(int slot, HeatState state, float amount) {
         if (!validateSlot(slot)) return;
         Pair<HeatState, Float> pair = heatMap.get(slot);
 
@@ -95,6 +93,17 @@ public class HeatHandler implements INBTSerializable<CompoundTag> {
             return heatMap.get(slot).getB();
         else
             return 0F;
+    }
+
+    public void setHeatState(int slot, HeatState state) {
+        setPairData(slot, state, getProgress(slot));
+    }
+
+    public HeatState getHeatState(int slot) {
+        if (validateSlot(slot))
+            return heatMap.get(slot).getA();
+        else
+            return HeatState.UNMELTABLE;
     }
 
 

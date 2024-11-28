@@ -1,4 +1,4 @@
-package net.kermir.meltit.util;
+package net.kermir.meltit.block.entity.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;

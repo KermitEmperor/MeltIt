@@ -1,6 +1,7 @@
-package net.kermir.meltit.block;
+package net.kermir.meltit.block.entity;
 
 import net.kermir.meltit.MeltIt;
+import net.kermir.meltit.block.BlockRegistry;
 import net.kermir.meltit.block.multiblock.controller.entity.SmelteryControllerBlockEntity;
 import net.kermir.meltit.block.multiblock.module.entity.SmelteryModuleBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;

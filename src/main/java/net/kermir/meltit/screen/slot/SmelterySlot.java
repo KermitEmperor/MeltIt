@@ -1,7 +1,8 @@
 package net.kermir.meltit.screen.slot;
 
 import net.kermir.meltit.block.multiblock.controller.heat.HeatHandler;
-import net.kermir.meltit.util.ResizeableItemStackHandler;
+import net.kermir.meltit.block.multiblock.controller.heat.HeatState;
+import net.kermir.meltit.item.util.ResizeableItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class SmelterySlot extends SlotItemHandler {
@@ -13,8 +14,12 @@ public class SmelterySlot extends SlotItemHandler {
     }
 
     public float getProgress() {
+        return heatHandler.getProgress(getSlotIndex());
+    }
+
+    public HeatState getHeatState() {
         if (heatHandler.validateSlot(getSlotIndex())) {
-            return heatHandler.getProgress(getSlotIndex());
-        } else return 0F;
+            return heatHandler.getHeatState(getSlotIndex());
+        } else return HeatState.UNMELTABLE;
     }
 }

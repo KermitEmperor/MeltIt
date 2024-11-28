@@ -1,10 +1,12 @@
 package net.kermir.meltit;
 import com.mojang.logging.LogUtils;
-import net.kermir.meltit.block.BlockEntityRegistry;
+import net.kermir.meltit.block.entity.BlockEntityRegistry;
 import net.kermir.meltit.block.BlockRegistry;
+import net.kermir.meltit.event.EventBusEvents;
 import net.kermir.meltit.item.CreativeTab;
 import net.kermir.meltit.item.ItemRegistry;
 import net.kermir.meltit.networking.PacketChannel;
+import net.kermir.meltit.recipe.RecipeRegistry;
 import net.kermir.meltit.render.RenderBox;
 import net.kermir.meltit.screen.MenuTypeRegistries;
 import net.kermir.meltit.screen.SmelteryControllerScreen;
@@ -37,12 +39,14 @@ public class MeltIt {
         BlockRegistry.register(ModEventBus);
         BlockEntityRegistry.register(ModEventBus);
         MenuTypeRegistries.register(ModEventBus);
+        RecipeRegistry.register(ModEventBus);
 
 
         // Register ourselves for server and other game events we are interested in
         IEventBus ForgeEventBus = MinecraftForge.EVENT_BUS;
         ForgeEventBus.register(this);
         ForgeEventBus.register(new RenderBox());
+        ForgeEventBus.register(new EventBusEvents());
     }
 
     private void clientSetup(final FMLClientSetupEvent event) {

@@ -1,0 +1,12 @@
+{
+  "type": "meltit:smeltery_melting",
+  "input": {
+    "item": "minecraft:iron_ingot"
+  },
+  "output": {
+    "fluid": "minecraft:lava",
+    "amount": 1000
+  },
+  "temperature": 1300,
+  "time": 200
+}

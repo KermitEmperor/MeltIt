@@ -1,4 +1,4 @@
-package net.kermir.meltit.util;
+package net.kermir.meltit.item.util;
 
 import net.kermir.meltit.MeltIt;
 import net.minecraft.core.NonNullList;

@@ -1,8 +1,7 @@
 package net.kermir.meltit.block.multiblock.module.entity;
 
-import net.kermir.meltit.block.BlockEntityRegistry;
+import net.kermir.meltit.block.entity.BlockEntityRegistry;
 import net.kermir.meltit.block.multiblock.IMaster;
-import net.kermir.meltit.block.multiblock.controller.entity.SmelteryControllerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;

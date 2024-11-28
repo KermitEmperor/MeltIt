@@ -1,15 +1,17 @@
 package net.kermir.meltit.block.multiblock.controller.entity;
 
 import net.kermir.meltit.MeltIt;
-import net.kermir.meltit.block.BlockEntityRegistry;
+import net.kermir.meltit.block.entity.BlockEntityRegistry;
 import net.kermir.meltit.block.multiblock.IMaster;
 import net.kermir.meltit.block.multiblock.SmelteryMultiblock;
 import net.kermir.meltit.block.multiblock.controller.heat.HeatHandler;
+import net.kermir.meltit.block.multiblock.controller.heat.HeatState;
+import net.kermir.meltit.item.util.ResizeableItemStackHandler;
 import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
 import net.kermir.meltit.networking.packet.UpdateControllerSizePacket;
+import net.kermir.meltit.recipe.types.SmelteryMeltingRecipe;
 import net.kermir.meltit.screen.SmelteryControllerMenu;
-import net.kermir.meltit.util.ResizeableItemStackHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -44,6 +46,7 @@ import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 public class SmelteryControllerBlockEntity extends BlockEntity implements MenuProvider, IMaster {
+    public final HeatHandler heatHandler = new HeatHandler(0);
     public final ResizeableItemStackHandler itemHandler = new ResizeableItemStackHandler(0) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -69,7 +72,6 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
             MeltIt.LOGGER.debug("Excess Items dropped");
         }
     };
-    public final HeatHandler heatHandler = new HeatHandler(0);
 
     private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
     private LazyOptional<HeatHandler> lazyHeatHandler = LazyOptional.empty();
@@ -88,11 +90,36 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, SmelteryControllerBlockEntity pBlockEntity) {
         pBlockEntity.useItemHandler(hndlr -> {
             ResizeableItemStackHandler handler = (ResizeableItemStackHandler) hndlr;
+            HeatHandler heats = pBlockEntity.heatHandler;
+
+
 
             for (int i = 0; i < handler.getSlots(); i++) {
-                if (!handler.getStackInSlot(i).isEmpty())
-                    pBlockEntity.heatHandler.forceProgress(i, 0.05F);
-                else pBlockEntity.heatHandler.setProgress(i, 0F);
+                ItemStack stack = handler.getStackInSlot(i);
+
+
+                //Might have to change to ensure optimazitation
+                //TODO fix flicker on item changed
+                if (stack.isEmpty()) continue;
+
+                Optional<SmelteryMeltingRecipe> recipeOptional = pLevel.getRecipeManager()
+                        .getRecipeFor(SmelteryMeltingRecipe.Type.INSTANCE, new SimpleContainer(stack), pLevel);
+
+                int finalI = i;
+
+                recipeOptional.ifPresentOrElse(recipe -> {
+                    if (heats.getHeatState(finalI) == HeatState.UNMELTABLE) {
+                        heats.setPairData(finalI, HeatState.MELTING, 0F);
+                    }
+                    if (heats.getProgress(finalI) == 1F) {
+                        stack.shrink(1);
+                        heats.setPairData(finalI, HeatState.UNMELTABLE,1F);
+                    } else {
+                        heats.incrementProgress(finalI,0.05F);
+                    }
+                }, () -> {
+                    heats.setPairData(finalI, HeatState.UNMELTABLE,1F);
+                });
             }
         });
     }

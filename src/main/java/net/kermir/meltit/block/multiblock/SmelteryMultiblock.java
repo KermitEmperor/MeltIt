@@ -1,7 +1,7 @@
 package net.kermir.meltit.block.multiblock;
 
 import net.kermir.meltit.MeltIt;
-import net.kermir.meltit.util.BlockEntityHelper;
+import net.kermir.meltit.block.entity.util.BlockEntityHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;

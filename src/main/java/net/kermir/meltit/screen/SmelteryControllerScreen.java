@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
 import net.kermir.meltit.MeltIt;
+import net.kermir.meltit.block.multiblock.controller.heat.HeatState;
 import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.networking.packet.UpdateServerMenuIndiciesPacket;
 import net.kermir.meltit.screen.slot.SmelterySlot;
@@ -91,15 +92,25 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
                     if (slot_og.hasItem()) {
                         int xpos = slot_og.x+x-4;
                         int ypos = slot_og.y+y;
-                        int UOffset = 44;
-                        //pPoseStack.mulPose(Vector3f.ZN.rotationDegrees(180));
-                        //blit(pPoseStack, slot_og.x+x-4, slot_og.y+y, 44, 166-16, heatStateWidth,-16);
+                        int UOffset = getuOffset(smelterySlot);
 
                         drawHeatState(pPoseStack, smelterySlot.getProgress(), xpos, ypos, UOffset, 166, heatStateWidth, heatStateHeight);
                     }
                 }
             }
         }
+    }
+
+    private static int getuOffset(SmelterySlot smelterySlot) {
+        int UOffset = 44;
+        HeatState state = smelterySlot.getHeatState();
+        //pPoseStack.mulPose(Vector3f.ZN.rotationDegrees(180));
+        //blit(pPoseStack, slot_og.x+x-4, slot_og.y+y, 44, 166-16, heatStateWidth,-16);
+
+        if (state.equals(HeatState.TOO_COLD)) UOffset += 3;
+        if (state.equals(HeatState.NO_SPACE)) UOffset += 6;
+        if (state.equals(HeatState.UNMELTABLE)) UOffset += 9;
+        return UOffset;
     }
 
     private void drawHeatState(PoseStack poseStack, float progress ,int x,int y,int UOffset, int VOffset, int UWidth, int VHeight) {

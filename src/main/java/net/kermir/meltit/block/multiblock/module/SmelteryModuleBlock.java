@@ -1,8 +1,7 @@
 package net.kermir.meltit.block.multiblock.module;
 
-import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.multiblock.module.entity.SmelteryModuleBlockEntity;
-import net.kermir.meltit.util.BlockEntityHelper;
+import net.kermir.meltit.block.entity.util.BlockEntityHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;

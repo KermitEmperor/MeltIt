@@ -3,7 +3,7 @@ package net.kermir.meltit.block.multiblock.module.entity;
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.multiblock.IMaster;
 import net.kermir.meltit.block.multiblock.IServant;
-import net.kermir.meltit.util.BlockEntityHelper;
+import net.kermir.meltit.block.entity.util.BlockEntityHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
