@@ -11,6 +11,8 @@ import net.kermir.meltit.render.RenderBox;
 import net.kermir.meltit.screen.MenuTypeRegistries;
 import net.kermir.meltit.screen.SmelteryControllerScreen;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -51,6 +53,8 @@ public class MeltIt {
 
     private void clientSetup(final FMLClientSetupEvent event) {
         MenuScreens.register(MenuTypeRegistries.SMELTERY_CONTROLLER_MENU.get(), SmelteryControllerScreen::new);
+
+        ItemBlockRenderTypes.setRenderLayer(BlockRegistry.WALL_GLASS_BLOCK.get(), RenderType.translucent());
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

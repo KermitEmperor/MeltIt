@@ -17,12 +17,12 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import org.jetbrains.annotations.Nullable;
 
-public class SmelteryModuleBlock extends Block implements EntityBlock {
+public class SmelteryModuleBlockBase extends Block implements EntityBlock {
     public static final BooleanProperty IN_MULTIBLOCK = BooleanProperty.create("in_multiblock");
 
     protected final boolean requiresBlockEntity;
 
-    public SmelteryModuleBlock(Properties pProperties, boolean requiresBlockEntity) {
+    public SmelteryModuleBlockBase(Properties pProperties, boolean requiresBlockEntity) {
         super(pProperties);
         this.requiresBlockEntity = requiresBlockEntity;
         this.registerDefaultState(this.defaultBlockState().setValue(IN_MULTIBLOCK, false));

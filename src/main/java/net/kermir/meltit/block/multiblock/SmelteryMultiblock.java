@@ -14,7 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import static net.kermir.meltit.block.multiblock.controller.entity.SmelteryControllerBlockEntity.FACING;
-import static net.kermir.meltit.block.multiblock.module.SmelteryModuleBlock.IN_MULTIBLOCK;
+import static net.kermir.meltit.block.multiblock.module.SmelteryModuleBlockBase.IN_MULTIBLOCK;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class SmelteryMultiblock {

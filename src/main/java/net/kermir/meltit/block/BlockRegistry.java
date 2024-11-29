@@ -2,7 +2,9 @@ package net.kermir.meltit.block;
 
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.multiblock.controller.SmelteryController;
-import net.kermir.meltit.block.multiblock.module.SmelteryModuleBlock;
+import net.kermir.meltit.block.multiblock.module.SmelteryModuleBlockBase;
+import net.kermir.meltit.block.multiblock.module.SmelteryModuleTransparentWall;
+import net.kermir.meltit.block.multiblock.module.SmelteryModuleWall;
 import net.kermir.meltit.item.ItemRegistry;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -25,10 +27,10 @@ public class BlockRegistry {
     //public static final Smelter
 
     public static final RegistryObject<Block> WALL_BLOCK = registerBlock("wall_block",
-            () -> new SmelteryModuleBlock(BlockBehaviour.Properties.of(Material.METAL).strength(2f), true), MeltIt.MOD_TAB);
+            () -> new SmelteryModuleWall(BlockBehaviour.Properties.of(Material.METAL).strength(2f), true), MeltIt.MOD_TAB);
 
     public static final RegistryObject<Block> WALL_GLASS_BLOCK = registerBlock("wall_glass_block",
-            () -> new SmelteryModuleBlock(BlockBehaviour.Properties.of(Material.GLASS).strength(2f), true), MeltIt.MOD_TAB);
+            () -> new SmelteryModuleTransparentWall(BlockBehaviour.Properties.of(Material.GLASS).strength(2f).noOcclusion(), true), MeltIt.MOD_TAB);
 
     public static final RegistryObject<Block> SMELTERY_CONTROLLER = registerBlock("smeltery_controller",
             () -> new SmelteryController(BlockBehaviour.Properties.copy(Blocks.BRICKS)), MeltIt.MOD_TAB);
