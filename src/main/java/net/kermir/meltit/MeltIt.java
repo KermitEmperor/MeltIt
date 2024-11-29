@@ -8,12 +8,16 @@ import net.kermir.meltit.item.ItemRegistry;
 import net.kermir.meltit.networking.PacketChannel;
 import net.kermir.meltit.recipe.RecipeRegistry;
 import net.kermir.meltit.render.RenderBox;
+import net.kermir.meltit.render.blockentity.FuelTankRenderer;
 import net.kermir.meltit.screen.MenuTypeRegistries;
 import net.kermir.meltit.screen.SmelteryControllerScreen;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -55,6 +59,8 @@ public class MeltIt {
         MenuScreens.register(MenuTypeRegistries.SMELTERY_CONTROLLER_MENU.get(), SmelteryControllerScreen::new);
 
         ItemBlockRenderTypes.setRenderLayer(BlockRegistry.WALL_GLASS_BLOCK.get(), RenderType.translucent());
+
+        BlockEntityRenderers.register(BlockEntityRegistry.SMELTERY_FUEL_TANK_MODULE.get(), FuelTankRenderer::new);
         ItemBlockRenderTypes.setRenderLayer(BlockRegistry.FUEL_TANK.get(), RenderType.translucent());
     }
 

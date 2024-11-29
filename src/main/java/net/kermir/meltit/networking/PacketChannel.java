@@ -1,10 +1,7 @@
 package net.kermir.meltit.networking;
 
 import net.kermir.meltit.MeltIt;
-import net.kermir.meltit.networking.packet.CloseSmelteryScreenPacket;
-import net.kermir.meltit.networking.packet.RenderBoxPacket;
-import net.kermir.meltit.networking.packet.UpdateControllerSizePacket;
-import net.kermir.meltit.networking.packet.UpdateServerMenuIndiciesPacket;
+import net.kermir.meltit.networking.packet.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -53,6 +50,12 @@ public class PacketChannel {
                 .encoder(UpdateControllerSizePacket::encode)
                 .decoder(UpdateControllerSizePacket::new)
                 .consumer(UpdateControllerSizePacket::handle)
+                .add();
+
+        net.messageBuilder(UpdateTankContentsPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(UpdateTankContentsPacket::encode)
+                .decoder(UpdateTankContentsPacket::new)
+                .consumer(UpdateTankContentsPacket::handle)
                 .add();
     }
 
