@@ -9,12 +9,12 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class SmelteryModuleBlockEntity extends ServantEntity {
-    public SmelteryModuleBlockEntity(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
+public class SmelteryBlockEntity extends ServantEntity {
+    public SmelteryBlockEntity(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
         super(pType, pPos, pBlockState);
     }
 
-    public SmelteryModuleBlockEntity(BlockPos pos, BlockState state) {
+    public SmelteryBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntityRegistry.SMELTERY_MODULE.get(), pos, state);
     }
 
@@ -24,7 +24,7 @@ public class SmelteryModuleBlockEntity extends ServantEntity {
             if (blockEntity instanceof IMaster master) {
                 master.notifyChange(pos, state);
                 break;
-            } else if (blockEntity instanceof SmelteryModuleBlockEntity module && module.hasMaster()) {
+            } else if (blockEntity instanceof SmelteryBlockEntity module && module.hasMaster()) {
                 module.notifyMasterOfChange(pos, state, false);
                 break;
             }

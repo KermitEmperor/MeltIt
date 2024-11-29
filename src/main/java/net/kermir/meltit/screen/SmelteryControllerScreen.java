@@ -1,7 +1,9 @@
 package net.kermir.meltit.screen;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.*;
+import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.multiblock.controller.heat.HeatState;
@@ -11,12 +13,23 @@ import net.kermir.meltit.screen.slot.SmelterySlot;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.Material;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.client.model.ForgeModelBakery;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.items.wrapper.PlayerInvWrapper;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
 
 @SuppressWarnings("unused")
 public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryControllerMenu> {
@@ -42,6 +55,8 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
     public int remainderRows;
     public int previousIndexOffset;
     public int indexOffset;
+    private static final int smeltIconImageWidth = 14;
+    private static final int smeltIconImageHeight = 14;
     private static final int scrollBarImageWidth = 14;
     private static final int scrollBarImageHeight = 145;
     private static final int scrollButtonImageWidth = 12;
@@ -78,6 +93,11 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
             }
         }
 
+        //smelt icon
+        if (this.getMenu().blockEntity.isLit())
+            this.blit(pPoseStack, x+92, y+3+smeltIconImageHeight,56, 166, smeltIconImageWidth, smeltIconImageHeight );
+
+
         //slots
         int currentSlot = 0;
         for (Slot slot_og : this.getMenu().slots) {
@@ -99,6 +119,80 @@ public class SmelteryControllerScreen extends AbstractContainerScreen<SmelteryCo
                 }
             }
         }
+
+        //fuel
+        FluidStack fluidStack = new FluidStack(Fluids.LAVA, 100);
+        //36 is the max height of the gauge
+        //TODO Amount of Fuel / Max amount of fuel * Height of the gauge
+        renderFluid(pPoseStack, fluidStack, x+93, y+54, 12, 36);
+    }
+
+
+    private void renderFluid(PoseStack poseStack, FluidStack fluidStack, int x, int y, int width, int height) {
+        Fluid fluid = fluidStack.getFluid();
+        Function<Material, TextureAtlasSprite> spriteGetter = ForgeModelBakery.defaultTextureGetter();
+        TextureAtlasSprite fluidSprite = fluid != Fluids.EMPTY ? spriteGetter.apply(ForgeHooksClient.getBlockMaterial(fluid.getAttributes().getStillTexture())) : null;
+
+        if (fluidSprite != null) {
+            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShaderTexture(0, fluidSprite.atlas().location());
+            RenderSystem.enableBlend();
+
+            // Draw fluid texture
+            //innerBlit(pPoseStack.last().pose(), pX, pX + pWidth, pY, pY + pHeight, pBlitOffset, pSprite.getU0(), pSprite.getU1(), pSprite.getV0(), pSprite.getV1());
+            //blit(poseStack, x, y, 0, fluidSprite.getWidth(), fluidSprite.getHeight(), fluidSprite);
+            //blit(poseStack, x, y, 0, fluidSprite.getU0(), fluidSprite.getU1(), (int)fluidSprite.getV0(), (int)fluidSprite.getV1(), fluidSprite.getHeight(),fluidSprite.getWidth());
+
+            int textureWidth = fluidSprite.getWidth();   // Width of the texture in the atlas
+            int textureHeight = fluidSprite.getHeight(); // Height of the texture in the atlas
+
+            float u0 = fluidSprite.getU0();
+            float v0 = fluidSprite.getV0();
+            float uWidth = fluidSprite.getU1() - fluidSprite.getU0();
+            float vHeight = fluidSprite.getV1() - fluidSprite.getV0();
+
+            for (int i = 0; i < width; i += textureWidth) {
+                for (int j = 0; j < height; j += textureHeight) {
+                    int drawWidth = Math.min(textureWidth, width - i);    // Crop if overflow
+                    int drawHeight = Math.min(textureHeight, height - j); // Crop if overflow
+
+                    float u1 = u0 + (drawWidth / (float) textureWidth) * uWidth;
+                    float v1 = v0 + (drawHeight / (float) textureHeight) * vHeight;
+
+                    int finalY = y - j;
+
+                    if (textureHeight != drawHeight) {
+                        finalY += (textureWidth - drawHeight);
+                    }
+
+                    // Render a single tile or cropped part
+                    //we switch up v0 and v1 to v1 and v0 so it will draw the fluid from the bottom to up
+                    myBlit(poseStack, x + i, finalY, 0, drawWidth, drawHeight, u0, u1, v1, v0);
+                }
+            }
+
+
+
+            RenderSystem.disableBlend();
+        }
+    }
+
+    public static void myBlit(PoseStack pPoseStack, int pX, int pY, int pBlitOffset, int pWidth, int pHeight, float U0, float U1, float V0, float V1) {
+        innerBlit(pPoseStack.last().pose(), pX, pX + pWidth, pY, pY + pHeight, pBlitOffset, U0, U1, V0, V1);
+    }
+
+
+    //cuz fuck you for making it private, now i had to copy it >:(
+    private static void innerBlit(Matrix4f pMatrix, int pX1, int pX2, int pY1, int pY2, int pBlitOffset, float pMinU, float pMaxU, float pMinV, float pMaxV) {
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        bufferbuilder.vertex(pMatrix, (float)pX1, (float)pY2, (float)pBlitOffset).uv(pMinU, pMaxV).endVertex();
+        bufferbuilder.vertex(pMatrix, (float)pX2, (float)pY2, (float)pBlitOffset).uv(pMaxU, pMaxV).endVertex();
+        bufferbuilder.vertex(pMatrix, (float)pX2, (float)pY1, (float)pBlitOffset).uv(pMaxU, pMinV).endVertex();
+        bufferbuilder.vertex(pMatrix, (float)pX1, (float)pY1, (float)pBlitOffset).uv(pMinU, pMinV).endVertex();
+        bufferbuilder.end();
+        BufferUploader.end(bufferbuilder);
     }
 
     private static int getuOffset(SmelterySlot smelterySlot) {

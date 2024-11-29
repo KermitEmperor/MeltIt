@@ -8,8 +8,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class SmelteryModuleTransparentWall extends SmelteryModuleBlockBase {
-    public SmelteryModuleTransparentWall(Properties pProperties, boolean requiresBlockEntity) {
+public class SmelteryTransparentWall extends SmelteryBlockBase {
+    public SmelteryTransparentWall(Properties pProperties, boolean requiresBlockEntity) {
         super(pProperties, requiresBlockEntity);
     }
 

@@ -1,6 +1,6 @@
 package net.kermir.meltit.block.multiblock.module;
 
-import net.kermir.meltit.block.multiblock.module.entity.SmelteryModuleBlockEntity;
+import net.kermir.meltit.block.multiblock.module.entity.SmelteryBlockEntity;
 import net.kermir.meltit.block.entity.util.BlockEntityHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,12 +17,12 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import org.jetbrains.annotations.Nullable;
 
-public class SmelteryModuleBlockBase extends Block implements EntityBlock {
+public class SmelteryBlockBase extends Block implements EntityBlock {
     public static final BooleanProperty IN_MULTIBLOCK = BooleanProperty.create("in_multiblock");
 
     protected final boolean requiresBlockEntity;
 
-    public SmelteryModuleBlockBase(Properties pProperties, boolean requiresBlockEntity) {
+    public SmelteryBlockBase(Properties pProperties, boolean requiresBlockEntity) {
         super(pProperties);
         this.requiresBlockEntity = requiresBlockEntity;
         this.registerDefaultState(this.defaultBlockState().setValue(IN_MULTIBLOCK, false));
@@ -37,7 +37,7 @@ public class SmelteryModuleBlockBase extends Block implements EntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
         if (requiresBlockEntity || pState.getValue(IN_MULTIBLOCK)) {
-            return new SmelteryModuleBlockEntity(pPos, pState);
+            return new SmelteryBlockEntity(pPos, pState);
         }
         return null;
     }
@@ -51,14 +51,14 @@ public class SmelteryModuleBlockBase extends Block implements EntityBlock {
                 }
             } else {
                 // block changed, tell the master then ditch the block entity
-                BlockEntityHelper.get(SmelteryModuleBlockEntity.class, pLevel, pPos).ifPresent(te -> te.notifyMasterOfChange(pPos, pNewState, true));
+                BlockEntityHelper.get(SmelteryBlockEntity.class, pLevel, pPos).ifPresent(te -> te.notifyMasterOfChange(pPos, pNewState, true));
             }
         }
     }
 
     @Override
     public void setPlacedBy(Level pLevel, BlockPos pPos, BlockState pState, @Nullable LivingEntity pPlacer, ItemStack pStack) {
-        SmelteryModuleBlockEntity.updateCloseBlocks(pLevel, pPos, pState);
+        SmelteryBlockEntity.updateCloseBlocks(pLevel, pPos, pState);
     }
 
     @Override

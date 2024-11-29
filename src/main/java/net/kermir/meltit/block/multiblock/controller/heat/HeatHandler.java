@@ -1,5 +1,6 @@
 package net.kermir.meltit.block.multiblock.controller.heat;
 
+import net.kermir.meltit.MeltIt;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraftforge.common.util.INBTSerializable;
@@ -41,20 +42,6 @@ public class HeatHandler implements INBTSerializable<CompoundTag> {
 
     public Pair<HeatState, Float> pair(HeatState sate, float progress) {
         return new Pair<>(sate, progress);
-    }
-
-    @Override
-    public CompoundTag serializeNBT() {
-
-        CompoundTag nbt = new CompoundTag();
-        for (Pair<HeatState, Float> pair : heatMap) {
-            CompoundTag stateTag = new CompoundTag();
-            stateTag.putString("State", pair.getA().toString());
-            stateTag.putFloat("Progress", pair.getB());
-            nbt.put(String.valueOf(heatMap.indexOf(pair))  ,stateTag);
-        }
-
-        return nbt;
     }
 
     public boolean validateSlot(int slot) {
@@ -106,34 +93,28 @@ public class HeatHandler implements INBTSerializable<CompoundTag> {
             return HeatState.UNMELTABLE;
     }
 
-
- /*
     @Override
-    public CompoundTag serializeNBT()
-    {
-        ListTag nbtTagList = new ListTag();
-        for (int i = 0; i < stacks.size(); i++)
-        {
-            if (!stacks.get(i).isEmpty())
-            {
-                CompoundTag itemTag = new CompoundTag();
-                itemTag.putInt("Slot", i);
-                stacks.get(i).save(itemTag);
-                nbtTagList.add(itemTag);
-            }
-        }
+    public CompoundTag serializeNBT() {
+
         CompoundTag nbt = new CompoundTag();
-        nbt.put("Items", nbtTagList);
-        nbt.putInt("Size", stacks.size());
+        for (Pair<HeatState, Float> pair : heatMap) {
+            CompoundTag stateTag = new CompoundTag();
+            stateTag.putString("State", pair.getA().toString());
+            stateTag.putFloat("Progress", pair.getB());
+            nbt.put(String.valueOf(heatMap.indexOf(pair))  ,stateTag);
+        }
+
         return nbt;
     }
-    */
+
     @Override
     public void deserializeNBT(CompoundTag nbt) {
         heatMap.clear();
+        MeltIt.LOGGER.debug("{}",nbt);
         for (int i = 0; i < nbt.size(); i++) {
+            CompoundTag aPair = nbt.getCompound(String.valueOf(i));
             //TODO this
-            heatMap.add(pair(HeatState.valueOf(nbt.getString("State")), nbt.getFloat("Progress")));
+            heatMap.add(pair(HeatState.valueOf(aPair.getString("State").toUpperCase()), aPair.getFloat("Progress")));
         }
     }
 }

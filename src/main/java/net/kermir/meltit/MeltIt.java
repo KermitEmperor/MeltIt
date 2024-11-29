@@ -55,6 +55,7 @@ public class MeltIt {
         MenuScreens.register(MenuTypeRegistries.SMELTERY_CONTROLLER_MENU.get(), SmelteryControllerScreen::new);
 
         ItemBlockRenderTypes.setRenderLayer(BlockRegistry.WALL_GLASS_BLOCK.get(), RenderType.translucent());
+        ItemBlockRenderTypes.setRenderLayer(BlockRegistry.FUEL_TANK.get(), RenderType.translucent());
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

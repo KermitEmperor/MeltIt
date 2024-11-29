@@ -2,6 +2,8 @@ package net.kermir.meltit.block.multiblock;
 
 import net.kermir.meltit.MeltIt;
 import net.kermir.meltit.block.entity.util.BlockEntityHelper;
+import net.kermir.meltit.block.multiblock.module.SmelteryFuelTank;
+import net.kermir.meltit.block.multiblock.module.entity.SmelteryFuelTankBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -14,7 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import static net.kermir.meltit.block.multiblock.controller.entity.SmelteryControllerBlockEntity.FACING;
-import static net.kermir.meltit.block.multiblock.module.SmelteryModuleBlockBase.IN_MULTIBLOCK;
+import static net.kermir.meltit.block.multiblock.module.SmelteryBlockBase.IN_MULTIBLOCK;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class SmelteryMultiblock {
@@ -28,6 +30,8 @@ public class SmelteryMultiblock {
     private int width = 0;
     private int depth = 0;
     private int height = 0;
+
+    private List<BlockPos> fuelTankPositions;
 
 
     public SmelteryMultiblock(IMaster controller, BlockPos controllerPos, BlockState controllerState) {
@@ -152,8 +156,15 @@ public class SmelteryMultiblock {
                 for (BlockPos pos : posList) {
                     MeltIt.LOGGER.debug("yes {} amd {}", pos, add);
                     updateMaster(level, pos, add);
+                    if (level.getBlockEntity(pos) instanceof SmelteryFuelTankBlockEntity fuelTank) {
+                        if (add) {
+                            fuelTankPositions.add(pos);
+                        }
+                    }
                 }
             }
+
+        if (!add) fuelTankPositions.clear();
 
     }
 

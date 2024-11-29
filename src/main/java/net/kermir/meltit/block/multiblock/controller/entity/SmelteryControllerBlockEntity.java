@@ -35,6 +35,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
@@ -88,40 +90,48 @@ public class SmelteryControllerBlockEntity extends BlockEntity implements MenuPr
 
     @SuppressWarnings("unused")
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, SmelteryControllerBlockEntity pBlockEntity) {
+        AtomicBoolean shouldLit = new AtomicBoolean(false);
+
         pBlockEntity.useItemHandler(hndlr -> {
             ResizeableItemStackHandler handler = (ResizeableItemStackHandler) hndlr;
             HeatHandler heats = pBlockEntity.heatHandler;
 
 
-
             for (int i = 0; i < handler.getSlots(); i++) {
                 ItemStack stack = handler.getStackInSlot(i);
 
+                if (stack.isEmpty()) {
+                    heats.setPairData(i, HeatState.UNMELTABLE, 0F);
+                } else {
+                    Optional<SmelteryMeltingRecipe> recipeOptional = pLevel.getRecipeManager()
+                            .getRecipeFor(SmelteryMeltingRecipe.Type.INSTANCE, new SimpleContainer(stack), pLevel);
 
-                //Might have to change to ensure optimazitation
-                //TODO fix flicker on item changed
-                if (stack.isEmpty()) continue;
+                    int finalI = i;
 
-                Optional<SmelteryMeltingRecipe> recipeOptional = pLevel.getRecipeManager()
-                        .getRecipeFor(SmelteryMeltingRecipe.Type.INSTANCE, new SimpleContainer(stack), pLevel);
-
-                int finalI = i;
-
-                recipeOptional.ifPresentOrElse(recipe -> {
-                    if (heats.getHeatState(finalI) == HeatState.UNMELTABLE) {
-                        heats.setPairData(finalI, HeatState.MELTING, 0F);
-                    }
-                    if (heats.getProgress(finalI) == 1F) {
-                        stack.shrink(1);
+                    recipeOptional.ifPresentOrElse(recipe -> {
+                        if (heats.getHeatState(finalI) == HeatState.UNMELTABLE) {
+                            heats.setPairData(finalI, HeatState.MELTING, 0F);
+                        }
+                        if (heats.getProgress(finalI) == 1F) {
+                            stack.shrink(1);
+                            heats.setPairData(finalI, HeatState.UNMELTABLE,1F);
+                        } else {
+                            shouldLit.set(true);
+                            heats.incrementProgress(finalI,1F / recipe.getSmeltTime());
+                        }
+                    }, () -> {
                         heats.setPairData(finalI, HeatState.UNMELTABLE,1F);
-                    } else {
-                        heats.incrementProgress(finalI,0.05F);
-                    }
-                }, () -> {
-                    heats.setPairData(finalI, HeatState.UNMELTABLE,1F);
-                });
+                    });
+                }
             }
         });
+
+        // 1 + 2 + 16
+        pLevel.setBlock(pPos, pState.setValue(LIT, shouldLit.get()), 18);
+    }
+
+    public boolean isLit() {
+        return this.getBlockState().getValue(LIT);
     }
 
     //etc

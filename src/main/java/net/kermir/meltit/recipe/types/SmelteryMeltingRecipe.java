@@ -113,7 +113,7 @@ public class SmelteryMeltingRecipe implements Recipe<SimpleContainer> {
             int timeInTicks;
             if (json.has("time"))
                 timeInTicks = json.get("time").getAsInt();
-            else timeInTicks = 1200; //30 seconds
+            else timeInTicks = 600; //30 seconds
 
 
             return new SmelteryMeltingRecipe(id, input, output, timeInTicks, minTemperature);
